@@ -5,6 +5,7 @@
 create table if not exists public.companies (
     id text primary key,
     name text not null,
+    user_id uuid references auth.users(id) default auth.uid(),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
@@ -28,15 +29,70 @@ create table if not exists public.contacts (
 alter table public.companies enable row level security;
 alter table public.contacts enable row level security;
 
--- 4. Create Policies for Public Anonymous Read/Write Access
--- Since the application operates on client-side environment keys, we allow public operations.
--- For production environments, consider configuring Supabase Auth.
-create policy "Allow public read access" on public.companies for select using (true);
-create policy "Allow public insert access" on public.companies for insert with check (true);
-create policy "Allow public update access" on public.companies for update using (true);
-create policy "Allow public delete access" on public.companies for delete using (true);
+-- 4. Drop Old Policies if any exist
+drop policy if exists "Allow public read access" on public.companies;
+drop policy if exists "Allow public insert access" on public.companies;
+drop policy if exists "Allow public update access" on public.companies;
+drop policy if exists "Allow public delete access" on public.companies;
 
-create policy "Allow public read access" on public.contacts for select using (true);
-create policy "Allow public insert access" on public.contacts for insert with check (true);
-create policy "Allow public update access" on public.contacts for update using (true);
-create policy "Allow public delete access" on public.contacts for delete using (true);
+drop policy if exists "Allow public read access" on public.contacts;
+drop policy if exists "Allow public insert access" on public.contacts;
+drop policy if exists "Allow public update access" on public.contacts;
+drop policy if exists "Allow public delete access" on public.contacts;
+
+drop policy if exists "Allow users to read their own companies" on public.companies;
+drop policy if exists "Allow users to insert their own companies" on public.companies;
+drop policy if exists "Allow users to update their own companies" on public.companies;
+drop policy if exists "Allow users to delete their own companies" on public.companies;
+
+drop policy if exists "Allow users to read contacts of their companies" on public.contacts;
+drop policy if exists "Allow users to insert contacts for their companies" on public.contacts;
+drop policy if exists "Allow users to update contacts of their companies" on public.contacts;
+drop policy if exists "Allow users to delete contacts of their companies" on public.contacts;
+
+-- 5. Create Secure User-Isolated Policies for Companies
+create policy "Allow users to read their own companies" on public.companies
+    for select using (auth.uid() = user_id);
+
+create policy "Allow users to insert their own companies" on public.companies
+    for insert with check (auth.uid() = user_id);
+
+create policy "Allow users to update their own companies" on public.companies
+    for update using (auth.uid() = user_id);
+
+create policy "Allow users to delete their own companies" on public.companies
+    for delete using (auth.uid() = user_id);
+
+-- 6. Create Secure User-Isolated Policies for Contacts
+-- (A contact is accessible if its parent company is owned by the authenticated user)
+create policy "Allow users to read contacts of their companies" on public.contacts
+    for select using (
+        exists (
+            select 1 from public.companies 
+            where companies.id = contacts.company_id and companies.user_id = auth.uid()
+        )
+    );
+
+create policy "Allow users to insert contacts for their companies" on public.contacts
+    for insert with check (
+        exists (
+            select 1 from public.companies 
+            where companies.id = contacts.company_id and companies.user_id = auth.uid()
+        )
+    );
+
+create policy "Allow users to update contacts of their companies" on public.contacts
+    for update using (
+        exists (
+            select 1 from public.companies 
+            where companies.id = contacts.company_id and companies.user_id = auth.uid()
+        )
+    );
+
+create policy "Allow users to delete contacts of their companies" on public.contacts
+    for delete using (
+        exists (
+            select 1 from public.companies 
+            where companies.id = contacts.company_id and companies.user_id = auth.uid()
+        )
+    );

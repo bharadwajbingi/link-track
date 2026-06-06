@@ -52,12 +52,13 @@ export async function fetchAllFromSupabase(): Promise<AppData | null> {
   };
 }
 
-export async function syncAddCompany(company: Company) {
+export async function syncAddCompany(company: Company, userId: string) {
   const { error } = await supabase
     .from('companies')
     .insert({
       id: company.id,
       name: company.name,
+      user_id: userId,
       created_at: company.createdAt,
       updated_at: company.updatedAt
     });
@@ -135,12 +136,13 @@ export async function syncDeleteContact(contactId: string) {
   if (error) console.error('Error syncing delete contact:', error);
 }
 
-export async function syncBulkUpload(data: AppData) {
+export async function syncBulkUpload(data: AppData, userId: string) {
   if (data.companies.length === 0) return;
   
   const dbCompanies = data.companies.map(c => ({
     id: c.id,
     name: c.name,
+    user_id: userId,
     created_at: c.createdAt,
     updated_at: c.updatedAt
   }));

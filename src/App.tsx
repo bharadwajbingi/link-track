@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Building2, Plus, Trash2, Pencil, ChevronRight, ExternalLink, Copy,
   Users, Clock, CheckCircle2, BarChart3, Home, Download, Upload,
-  Search, MessageSquare, X, Menu,
+  Search, MessageSquare, X, Menu, LogOut,
 } from 'lucide-react';
 import { AppData, Company, Contact, ContactStatus } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -26,6 +26,9 @@ import {
   syncDeleteContact,
   syncBulkUpload
 } from './lib/supabaseSync';
+import { User } from '@supabase/supabase-js';
+import { supabase } from './lib/supabase';
+import { Auth } from './components/Auth';
 
 type View = { type: 'dashboard' } | { type: 'company'; companyId: string };
 
@@ -55,6 +58,8 @@ function DatabaseSyncBadge({ status }: { status: 'syncing' | 'synced' | 'local' 
 }
 
 export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [data, setData] = useLocalStorage<AppData>('linktrack-data', getInitialData());
   const [view, setView] = useState<View>({ type: 'dashboard' });
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -64,6 +69,22 @@ export default function App() {
   const showToast = (message: string) => setToast({ message, visible: true });
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const currentUserId = user.id;
     async function loadData() {
       try {
         setSyncStatus('syncing');
@@ -77,7 +98,7 @@ export default function App() {
             const localData = JSON.parse(localItem) as AppData;
             if (localData && localData.companies && localData.companies.length > 0) {
               setSyncStatus('syncing');
-              await syncBulkUpload(localData);
+              await syncBulkUpload(localData, currentUserId);
               setSyncStatus('synced');
               showToast('Synced local data to Supabase!');
             } else {
@@ -94,7 +115,7 @@ export default function App() {
       }
     }
     loadData();
-  }, []);
+  }, [user]);
 
   const [companyModal, setCompanyModal] = useState<{ open: boolean; editId: string | null; name: string }>({
     open: false, editId: null, name: '',
@@ -112,7 +133,7 @@ export default function App() {
   const openEditCompany = (c: Company) => setCompanyModal({ open: true, editId: c.id, name: c.name });
   
   const saveCompany = async () => {
-    if (!companyModal.name.trim()) return;
+    if (!companyModal.name.trim() || !user) return;
     if (companyModal.editId) {
       setData(updateCompany(data, companyModal.editId, companyModal.name));
       setCompanyModal({ open: false, editId: null, name: '' });
@@ -123,7 +144,7 @@ export default function App() {
       const newCompany = newData.companies[newData.companies.length - 1];
       setView({ type: 'company', companyId: newCompany.id });
       setCompanyModal({ open: false, editId: null, name: '' });
-      await syncAddCompany(newCompany);
+      await syncAddCompany(newCompany, user.id);
     }
   };
 
@@ -233,6 +254,18 @@ export default function App() {
       })
     : [];
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <span className="w-8 h-8 border-3 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Auth onAuthSuccess={() => {}} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {sidebarOpen && (
@@ -308,6 +341,16 @@ export default function App() {
             <Upload size={15} /> Import Data
           </button>
           <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+          
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              setData(getInitialData());
+            }}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-rose-500 hover:text-rose-400 hover:bg-rose-950/20 transition-colors mt-2"
+          >
+            <LogOut size={15} /> Sign Out
+          </button>
         </div>
       </aside>
 
