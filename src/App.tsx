@@ -677,10 +677,10 @@ function CompanyView({
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <StatusDropdown status={contact.status} onChange={s => onChangeStatus(contact.id, s)} />
-                      <button onClick={() => onEditContact(contact)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors opacity-0 group-hover:opacity-100">
+                      <button onClick={() => onEditContact(contact)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100">
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => onDeleteContact(contact.id)} className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100">
+                      <button onClick={() => onDeleteContact(contact.id)} className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100">
                         <Trash2 size={14} />
                       </button>
                     </div>
