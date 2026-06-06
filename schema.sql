@@ -1,6 +1,19 @@
 -- SQL Schema for LinkTrack
 -- Copy and run this script in your Supabase SQL Editor
 
+-- =========================================================================
+-- OPTION A: UPGRADE EXISTING TABLES (If you already have tables in your DB)
+-- =========================================================================
+-- Safely add the user_id column if the companies table already exists:
+alter table public.companies add column if not exists user_id uuid references auth.users(id) default auth.uid();
+
+-- =========================================================================
+-- OPTION B: CLEAN SLATE (Optional - uncomment to drop existing tables and start fresh)
+-- =========================================================================
+-- drop table if exists public.contacts cascade;
+-- drop table if exists public.companies cascade;
+
+
 -- 1. Create Companies Table
 create table if not exists public.companies (
     id text primary key,
@@ -64,7 +77,6 @@ create policy "Allow users to delete their own companies" on public.companies
     for delete using (auth.uid() = user_id);
 
 -- 6. Create Secure User-Isolated Policies for Contacts
--- (A contact is accessible if its parent company is owned by the authenticated user)
 create policy "Allow users to read contacts of their companies" on public.contacts
     for select using (
         exists (
