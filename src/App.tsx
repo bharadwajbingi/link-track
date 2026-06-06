@@ -343,7 +343,7 @@ export default function App() {
 
         <div className="p-4 sm:p-6 max-w-6xl mx-auto">
           {view.type === 'dashboard' && (
-            <DashboardView data={data} stats={stats} onSelectCompany={id => setView({ type: 'company', companyId: id })} onCopyMessage={copyMessage} />
+            <DashboardView data={data} stats={stats} onSelectCompany={id => setView({ type: 'company', companyId: id })} onCopyMessage={copyMessage} onChangeStatus={changeStatus} />
           )}
           {selectedCompany && (
             <CompanyView
@@ -481,95 +481,239 @@ export default function App() {
 // --- Dashboard View ---
 
 function DashboardView({
-  data, stats, onSelectCompany, onCopyMessage,
+  data, stats, onSelectCompany, onCopyMessage, onChangeStatus,
 }: {
-  data: AppData; stats: ReturnType<typeof getStats>; onSelectCompany: (id: string) => void; onCopyMessage: (msg: string) => void;
+  data: AppData;
+  stats: ReturnType<typeof getStats>;
+  onSelectCompany: (id: string) => void;
+  onCopyMessage: (msg: string) => void;
+  onChangeStatus: (companyId: string, contactId: string, status: ContactStatus) => void;
 }) {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  // Filter companies matching the query
+  const matchedCompanies = normalizedQuery
+    ? data.companies.filter(c => c.name.toLowerCase().includes(normalizedQuery))
+    : [];
+
+  // Filter contacts matching the query across all companies
+  const matchedContacts = normalizedQuery
+    ? data.companies.flatMap(c =>
+        c.contacts
+          .filter(ct => ct.name.toLowerCase().includes(normalizedQuery) || ct.title.toLowerCase().includes(normalizedQuery))
+          .map(ct => ({ ...ct, companyId: c.id, companyName: c.name }))
+      )
+    : [];
+
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard icon={<Users size={20} />} label="Total Connections" value={stats.total} color="emerald" />
-        <StatCard icon={<Clock size={20} />} label="Pending" value={stats.pending} color="amber" />
-        <StatCard icon={<CheckCircle2 size={20} />} label="Accepted" value={stats.accepted} color="emerald" />
-        <StatCard icon={<BarChart3 size={20} />} label="Acceptance Rate" value={`${stats.acceptanceRate}%`} color="blue" />
+      {/* Global Search Box */}
+      <div className="relative w-full max-w-xl">
+        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Search companies, contacts, or job titles..."
+          className="w-full pl-11 pr-10 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-shadow bg-white shadow-sm"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <X size={14} />
+          </button>
+        )}
       </div>
 
-      {stats.readyToMessage.length > 0 && (
-        <section>
-          <h2 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-            <MessageSquare size={15} className="text-emerald-600" />
-            Ready to Message ({stats.readyToMessage.length})
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {stats.readyToMessage.map(c => {
-              const parent = data.companies.find(co => co.contacts.some(ct => ct.id === c.id));
-              return (
-                <div key={c.id} className="bg-white rounded-xl border border-slate-200/60 p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <div>
-                      <p className="font-semibold text-sm text-slate-900">{c.name}</p>
-                      <p className="text-xs text-slate-500">{c.title} &middot; {parent?.name}</p>
-                    </div>
-                    <button
-                      onClick={() => onCopyMessage(c.draftMessage)}
-                      className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition-colors"
-                    >
-                      <Copy size={12} /> Copy
-                    </button>
-                  </div>
-                  <p className="text-xs text-slate-600 line-clamp-2 mt-2 whitespace-pre-wrap">{c.draftMessage}</p>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+      {normalizedQuery ? (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900 mb-3">
+              Search Results for "{searchQuery}"
+            </h2>
 
-      <section>
-        <h2 className="text-sm font-semibold text-slate-900 mb-3">Companies</h2>
-        {data.companies.length === 0 ? (
-          <div className="text-center py-16">
-            <Building2 size={40} className="mx-auto text-slate-300 mb-3" />
-            <p className="text-sm text-slate-500 mb-1">No companies yet</p>
-            <p className="text-xs text-slate-400">Add a company from the sidebar to start tracking connections</p>
+            {matchedCompanies.length === 0 && matchedContacts.length === 0 ? (
+              <div className="bg-white rounded-xl border border-slate-200/60 p-8 text-center">
+                <Search size={32} className="mx-auto text-slate-300 mb-2" />
+                <p className="text-sm font-medium text-slate-600">No matches found</p>
+                <p className="text-xs text-slate-400 mt-1">Try searching for a different company name, person's name, or job title.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {matchedCompanies.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Companies ({matchedCompanies.length})</h3>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {matchedCompanies.map(c => {
+                        return (
+                          <button
+                            key={c.id}
+                            onClick={() => onSelectCompany(c.id)}
+                            className="bg-white rounded-xl border border-slate-200/60 p-4 text-left hover:shadow-md hover:border-slate-300 transition-all group w-full"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                                  <Building2 size={16} className="text-slate-500" />
+                                </div>
+                                <span className="font-semibold text-sm text-slate-900 group-hover:text-emerald-700 transition-colors truncate">{c.name}</span>
+                              </div>
+                              <ChevronRight size={16} className="text-slate-300 group-hover:text-emerald-500 transition-colors shrink-0" />
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {matchedContacts.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Contacts ({matchedContacts.length})</h3>
+                    <div className="space-y-3">
+                      {matchedContacts.map(contact => {
+                        const isAccepted = contact.status === 'accepted';
+                        const hasDraft = contact.draftMessage.trim().length > 0;
+                        return (
+                          <div key={contact.id} className="bg-white rounded-xl border border-slate-200/60 p-4 hover:shadow-md transition-all group">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-semibold text-sm text-slate-900">{contact.name}</h4>
+                                  <span className="text-xs text-slate-400">&middot;</span>
+                                  <button
+                                    onClick={() => onSelectCompany(contact.companyId)}
+                                    className="text-xs text-slate-500 hover:text-emerald-600 font-medium hover:underline transition-colors"
+                                  >
+                                    {contact.companyName}
+                                  </button>
+                                  <StatusBadge status={contact.status} />
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">{contact.title}</p>
+                                {contact.linkedinUrl && (
+                                  <a
+                                    href={contact.linkedinUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 mt-1.5 transition-colors"
+                                  >
+                                    LinkedIn <ExternalLink size={10} />
+                                  </a>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <StatusDropdown status={contact.status} onChange={s => onChangeStatus(contact.companyId, contact.id, s)} />
+                                {hasDraft && isAccepted && (
+                                  <button
+                                    onClick={() => onCopyMessage(contact.draftMessage)}
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm"
+                                  >
+                                    <Copy size={12} /> Copy
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {data.companies.map(c => {
-              const cs = getCompanyStats(c);
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => onSelectCompany(c.id)}
-                  className="bg-white rounded-xl border border-slate-200/60 p-4 text-left hover:shadow-md hover:border-slate-300 transition-all group"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
-                        <Building2 size={16} className="text-slate-500" />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <StatCard icon={<Users size={20} />} label="Total Connections" value={stats.total} color="emerald" />
+            <StatCard icon={<Clock size={20} />} label="Pending" value={stats.pending} color="amber" />
+            <StatCard icon={<CheckCircle2 size={20} />} label="Accepted" value={stats.accepted} color="emerald" />
+            <StatCard icon={<BarChart3 size={20} />} label="Acceptance Rate" value={`${stats.acceptanceRate}%`} color="blue" />
+          </div>
+
+          {stats.readyToMessage.length > 0 && (
+            <section>
+              <h2 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                <MessageSquare size={15} className="text-emerald-600" />
+                Ready to Message ({stats.readyToMessage.length})
+              </h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {stats.readyToMessage.map(c => {
+                  const parent = data.companies.find(co => co.contacts.some(ct => ct.id === c.id));
+                  return (
+                    <div key={c.id} className="bg-white rounded-xl border border-slate-200/60 p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <div>
+                          <p className="font-semibold text-sm text-slate-900">{c.name}</p>
+                          <p className="text-xs text-slate-500">{c.title} &middot; {parent?.name}</p>
+                        </div>
+                        <button
+                          onClick={() => onCopyMessage(c.draftMessage)}
+                          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition-colors"
+                        >
+                          <Copy size={12} /> Copy
+                        </button>
                       </div>
-                      <span className="font-semibold text-sm text-slate-900 group-hover:text-emerald-700 transition-colors">{c.name}</span>
+                      <p className="text-xs text-slate-600 line-clamp-2 mt-2 whitespace-pre-wrap">{c.draftMessage}</p>
                     </div>
-                    <ChevronRight size={16} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
-                  </div>
-                  <div className="flex gap-3 text-xs">
-                    <span className="text-amber-600 font-medium">{cs.pending} pending</span>
-                    <span className="text-emerald-600 font-medium">{cs.accepted} accepted</span>
-                    {cs.declined > 0 && <span className="text-rose-500 font-medium">{cs.declined} declined</span>}
-                  </div>
-                  {cs.total > 0 && (
-                    <div className="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden flex">
-                      <div className="bg-emerald-500 rounded-full" style={{ width: `${(cs.accepted / cs.total) * 100}%` }} />
-                      <div className="bg-amber-400" style={{ width: `${(cs.pending / cs.total) * 100}%` }} />
-                      <div className="bg-rose-400 rounded-full" style={{ width: `${(cs.declined / cs.total) * 100}%` }} />
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </section>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          <section>
+            <h2 className="text-sm font-semibold text-slate-900 mb-3">Companies</h2>
+            {data.companies.length === 0 ? (
+              <div className="text-center py-16">
+                <Building2 size={40} className="mx-auto text-slate-300 mb-3" />
+                <p className="text-sm text-slate-500 mb-1">No companies yet</p>
+                <p className="text-xs text-slate-400">Add a company from the sidebar to start tracking connections</p>
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {data.companies.map(c => {
+                  const cs = getCompanyStats(c);
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => onSelectCompany(c.id)}
+                      className="bg-white rounded-xl border border-slate-200/60 p-4 text-left hover:shadow-md hover:border-slate-300 transition-all group"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
+                            <Building2 size={16} className="text-slate-500" />
+                          </div>
+                          <span className="font-semibold text-sm text-slate-900 group-hover:text-emerald-700 transition-colors">{c.name}</span>
+                        </div>
+                        <ChevronRight size={16} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
+                      </div>
+                      <div className="flex gap-3 text-xs">
+                        <span className="text-amber-600 font-medium">{cs.pending} pending</span>
+                        <span className="text-emerald-600 font-medium">{cs.accepted} accepted</span>
+                        {cs.declined > 0 && <span className="text-rose-500 font-medium">{cs.declined} declined</span>}
+                      </div>
+                      {cs.total > 0 && (
+                        <div className="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden flex">
+                          <div className="bg-emerald-500 rounded-full" style={{ width: `${(cs.accepted / cs.total) * 100}%` }} />
+                          <div className="bg-amber-400" style={{ width: `${(cs.pending / cs.total) * 100}%` }} />
+                          <div className="bg-rose-400 rounded-full" style={{ width: `${(cs.declined / cs.total) * 100}%` }} />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </>
+      )}
     </div>
   );
 }
