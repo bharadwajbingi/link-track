@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { ContactStatus } from '../types';
 import { Clock, CheckCircle2, XCircle, MinusCircle } from 'lucide-react';
 
@@ -15,32 +16,51 @@ export function StatusDropdown({
   status: ContactStatus;
   onChange: (s: ContactStatus) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
   const current = options.find(o => o.value === status)!;
   const Icon = current.icon;
 
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener('mousedown', handleClick);
+      return () => document.removeEventListener('mousedown', handleClick);
+    }
+  }, [open]);
+
   return (
-    <div className="relative group">
-      <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-slate-100 transition-colors text-sm font-medium text-slate-600">
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-slate-100 transition-colors text-sm font-medium text-slate-600"
+      >
         <Icon size={14} className={current.color} />
-        {current.label}
+        <span className="hidden sm:inline">{current.label}</span>
       </button>
-      <div className="absolute left-0 top-full mt-1 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-30 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150">
-        {options.map(opt => {
-          const OptIcon = opt.icon;
-          return (
-            <button
-              key={opt.value}
-              onClick={() => onChange(opt.value)}
-              className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-sm hover:bg-slate-50 transition-colors ${
-                opt.value === status ? 'font-semibold' : 'font-medium text-slate-600'
-              }`}
-            >
-              <OptIcon size={15} className={opt.color} />
-              {opt.label}
-            </button>
-          );
-        })}
-      </div>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-30 animate-in">
+          {options.map(opt => {
+            const OptIcon = opt.icon;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-sm hover:bg-slate-50 transition-colors ${
+                  opt.value === status ? 'font-semibold' : 'font-medium text-slate-600'
+                }`}
+              >
+                <OptIcon size={15} className={opt.color} />
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

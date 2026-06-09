@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Mail, Lock, LogIn, Users } from 'lucide-react';
+import { Mail, Lock, LogIn, Users, ArrowLeft } from 'lucide-react';
 
 export function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,7 +17,13 @@ export function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
     setInfoMsg('');
 
     try {
-      if (isSignUp) {
+      if (mode === 'forgot') {
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: window.location.origin,
+        });
+        if (error) throw error;
+        setInfoMsg('Password reset email sent! Check your inbox.');
+      } else if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({
           email: email.trim(),
           password: password,
@@ -40,10 +46,10 @@ export function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background Decorative Gradients */}
+    <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md z-10">
         <div className="flex justify-center items-center gap-2.5">
@@ -53,26 +59,33 @@ export function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
           <span className="text-white font-extrabold text-2xl tracking-tight">LinkTrack</span>
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-white tracking-tight">
-          {isSignUp ? 'Create your account' : 'Sign in to your account'}
+          {mode === 'forgot' ? 'Reset your password' : mode === 'signup' ? 'Create your account' : 'Welcome back'}
         </h2>
-        <p className="mt-2 text-center text-sm text-slate-400">
-          Or{' '}
-          <button
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setErrorMsg('');
-              setInfoMsg('');
-            }}
-            className="font-semibold text-emerald-400 hover:text-emerald-300 transition-colors focus:outline-none"
-          >
-            {isSignUp ? 'sign in to existing account' : 'register a new account'}
-          </button>
-        </p>
+        {mode !== 'forgot' && (
+          <p className="mt-2 text-center text-sm text-slate-400">
+            {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+            <button
+              onClick={() => {
+                setMode(mode === 'login' ? 'signup' : 'login');
+                setErrorMsg('');
+                setInfoMsg('');
+              }}
+              className="font-semibold text-emerald-400 hover:text-emerald-300 transition-colors focus:outline-none"
+            >
+              {mode === 'login' ? 'Sign up' : 'Sign in'}
+            </button>
+          </p>
+        )}
+        {mode === 'forgot' && (
+          <p className="mt-2 text-center text-sm text-slate-400">
+            Enter your email and we will send you a reset link.
+          </p>
+        )}
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10 px-4 sm:px-0">
-        <div className="bg-slate-800/80 backdrop-blur-md py-8 px-4 shadow-xl border border-slate-700/50 sm:rounded-2xl sm:px-10">
-          <form className="space-y-6" onSubmit={handleAuth}>
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10">
+        <div className="bg-slate-800/80 backdrop-blur-md py-8 px-4 shadow-xl border border-slate-700/50 rounded-2xl sm:px-10">
+          <form className="space-y-5" onSubmit={handleAuth}>
             {errorMsg && (
               <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-4 text-xs font-medium text-rose-400">
                 {errorMsg}
@@ -104,25 +117,43 @@ export function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
               </div>
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                Password
-              </label>
-              <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 text-white rounded-xl text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-inner"
-                />
+            {mode !== 'forgot' && (
+              <div>
+                <label htmlFor="password" className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 text-white rounded-xl text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-inner"
+                  />
+                </div>
               </div>
-            </div>
+            )}
+
+            {mode === 'login' && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('forgot');
+                    setErrorMsg('');
+                    setInfoMsg('');
+                  }}
+                  className="text-xs text-slate-400 hover:text-emerald-400 transition-colors"
+                >
+                  Forgot your password?
+                </button>
+              </div>
+            )}
 
             <div>
               <button
@@ -134,12 +165,27 @@ export function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
                   <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
-                    <LogIn size={16} />
-                    {isSignUp ? 'Sign Up' : 'Sign In'}
+                    {mode === 'forgot' ? <Mail size={16} /> : <LogIn size={16} />}
+                    {mode === 'forgot' ? 'Send Reset Link' : mode === 'signup' ? 'Sign Up' : 'Sign In'}
                   </>
                 )}
               </button>
             </div>
+
+            {mode === 'forgot' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('login');
+                  setErrorMsg('');
+                  setInfoMsg('');
+                }}
+                className="w-full flex items-center justify-center gap-2 text-sm text-slate-400 hover:text-white transition-colors mt-2"
+              >
+                <ArrowLeft size={14} />
+                Back to sign in
+              </button>
+            )}
           </form>
         </div>
       </div>
