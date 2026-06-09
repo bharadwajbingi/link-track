@@ -9,10 +9,11 @@ interface ReminderPanelProps {
   onCompleteReminder: (reminderId: string) => void;
   onDeleteReminder: (reminderId: string) => void;
   contactId?: string;
+  theme?: string;
 }
 
 export function ReminderPanel({
-  reminders, companies, onAddReminder, onCompleteReminder, onDeleteReminder, contactId,
+  reminders, companies, onAddReminder, onCompleteReminder, onDeleteReminder, contactId, theme = 'dark',
 }: ReminderPanelProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [dueDate, setDueDate] = useState('');
@@ -61,11 +62,11 @@ export function ReminderPanel({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+        <h4 className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 ${theme === 'dark' ? 'text-surface-500' : 'text-surface-600'}`}>
           <Bell size={12} />
           Follow-up Reminders
           {activeReminders.filter(r => isOverdue(r.dueDate)).length > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 bg-rose-100 text-rose-700 rounded-full text-[10px] font-bold">
+            <span className="ml-1 px-1.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-full text-[10px] font-bold">
               {activeReminders.filter(r => isOverdue(r.dueDate)).length} overdue
             </span>
           )}
@@ -73,7 +74,7 @@ export function ReminderPanel({
         {contactId && (
           <button
             onClick={() => setIsAdding(!isAdding)}
-            className="flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+            className="flex items-center gap-1 text-xs font-medium text-brand-400 hover:text-brand-300 transition-colors"
           >
             <Plus size={12} />
             Set Reminder
@@ -82,13 +83,15 @@ export function ReminderPanel({
       </div>
 
       {isAdding && (
-        <div className="bg-slate-50 rounded-lg border border-slate-200 p-3 space-y-2 animate-in">
+        <div className={`rounded-lg border p-3 space-y-2 animate-in ${
+          theme === 'dark' ? 'bg-white/[0.03] border-white/[0.06]' : 'bg-surface-50 border-surface-200'
+        }`}>
           <input
             type="date"
             value={dueDate}
             onChange={e => setDueDate(e.target.value)}
             min={new Date().toISOString().split('T')[0]}
-            className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            className={theme === 'dark' ? 'input-premium' : 'input-premium-light'}
           />
           <input
             type="text"
@@ -96,13 +99,13 @@ export function ReminderPanel({
             onChange={e => setNote(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleAdd()}
             placeholder="Reminder note (optional)"
-            className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            className={theme === 'dark' ? 'input-premium' : 'input-premium-light'}
           />
           <div className="flex justify-end gap-2">
-            <button onClick={() => setIsAdding(false)} className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg">
+            <button onClick={() => setIsAdding(false)} className={theme === 'dark' ? 'btn-secondary text-xs' : 'btn-secondary-light text-xs'}>
               Cancel
             </button>
-            <button onClick={handleAdd} disabled={!dueDate} className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-40">
+            <button onClick={handleAdd} disabled={!dueDate} className="btn-primary text-xs !px-3 !py-1.5">
               Add
             </button>
           </div>
@@ -111,7 +114,7 @@ export function ReminderPanel({
 
       <div className="space-y-1.5 max-h-60 overflow-y-auto">
         {activeReminders.length === 0 && completedReminders.length === 0 && !isAdding && (
-          <p className="text-xs text-slate-400 py-2">No reminders set</p>
+          <p className={`text-xs py-2 ${theme === 'dark' ? 'text-surface-600' : 'text-surface-400'}`}>No reminders set</p>
         )}
 
         {activeReminders
@@ -125,35 +128,37 @@ export function ReminderPanel({
                 key={reminder.id}
                 className={`flex items-center gap-2 p-2 rounded-lg border transition-colors ${
                   overdue
-                    ? 'bg-rose-50 border-rose-200'
+                    ? 'bg-rose-500/5 border-rose-500/20'
                     : today
-                    ? 'bg-amber-50 border-amber-200'
-                    : 'bg-white border-slate-200 hover:bg-slate-50'
+                      ? 'bg-amber-500/5 border-amber-500/20'
+                      : theme === 'dark'
+                        ? 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]'
+                        : 'bg-white border-surface-200 hover:bg-surface-50'
                 }`}
               >
                 <button
                   onClick={() => onCompleteReminder(reminder.id)}
                   className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors hover:bg-emerald-500 hover:border-emerald-500 hover:text-white ${
-                    overdue ? 'border-rose-300' : 'border-slate-300'
+                    overdue ? 'border-rose-400/60' : theme === 'dark' ? 'border-surface-600' : 'border-surface-300'
                   }`}
                 >
                   <Check size={10} className="opacity-0 hover:opacity-100" />
                 </button>
                 <div className="flex-1 min-w-0">
                   {contactInfo && (
-                    <p className="text-xs font-medium text-slate-700 truncate">{contactInfo.name}</p>
+                    <p className={`text-xs font-medium truncate ${theme === 'dark' ? 'text-surface-200' : 'text-surface-700'}`}>{contactInfo.name}</p>
                   )}
                   {reminder.note && (
-                    <p className="text-xs text-slate-600 truncate">{reminder.note}</p>
+                    <p className={`text-xs truncate ${theme === 'dark' ? 'text-surface-400' : 'text-surface-600'}`}>{reminder.note}</p>
                   )}
                   <div className="flex items-center gap-1 mt-0.5">
                     {overdue ? (
-                      <AlertTriangle size={10} className="text-rose-500" />
+                      <AlertTriangle size={10} className="text-rose-400" />
                     ) : (
-                      <Calendar size={10} className="text-slate-400" />
+                      <Calendar size={10} className={theme === 'dark' ? 'text-surface-500' : 'text-surface-400'} />
                     )}
                     <span className={`text-[10px] font-medium ${
-                      overdue ? 'text-rose-600' : today ? 'text-amber-600' : 'text-slate-400'
+                      overdue ? 'text-rose-400' : today ? 'text-amber-400' : theme === 'dark' ? 'text-surface-500' : 'text-surface-400'
                     }`}>
                       {formatDueDate(reminder.dueDate)}
                     </span>
@@ -161,7 +166,7 @@ export function ReminderPanel({
                 </div>
                 <button
                   onClick={() => onDeleteReminder(reminder.id)}
-                  className="p-1 rounded hover:bg-rose-100 text-slate-300 hover:text-rose-500 transition-colors shrink-0"
+                  className="p-1 rounded hover:bg-rose-500/10 text-surface-500 hover:text-rose-400 transition-colors shrink-0"
                 >
                   <Trash2 size={11} />
                 </button>
@@ -170,14 +175,14 @@ export function ReminderPanel({
           })}
 
         {completedReminders.length > 0 && (
-          <div className="pt-2 border-t border-slate-100 mt-2">
-            <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Completed</p>
+          <div className={`pt-2 border-t mt-2 ${theme === 'dark' ? 'border-white/[0.06]' : 'border-surface-100'}`}>
+            <p className={`text-[10px] uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-surface-600' : 'text-surface-400'}`}>Completed</p>
             {completedReminders.slice(0, 3).map(reminder => (
               <div key={reminder.id} className="flex items-center gap-2 py-1 opacity-50">
-                <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                  <Check size={10} className="text-emerald-600" />
+                <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                  <Check size={10} className="text-emerald-400" />
                 </div>
-                <span className="text-xs text-slate-500 line-through truncate">{reminder.note || 'Follow up'}</span>
+                <span className={`text-xs line-through truncate ${theme === 'dark' ? 'text-surface-500' : 'text-surface-500'}`}>{reminder.note || 'Follow up'}</span>
               </div>
             ))}
           </div>
@@ -187,9 +192,10 @@ export function ReminderPanel({
   );
 }
 
-export function FollowUpToday({ reminders, companies, onCompleteReminder }: {
+export function FollowUpToday({ reminders, companies, theme = 'dark', onCompleteReminder }: {
   reminders: FollowUpReminder[];
   companies: Company[];
+  theme?: string;
   onCompleteReminder: (id: string) => void;
 }) {
   const now = new Date();
@@ -211,15 +217,19 @@ export function FollowUpToday({ reminders, companies, onCompleteReminder }: {
   const today = todayReminders.filter(r => new Date(r.dueDate).toDateString() === now.toDateString());
 
   return (
-    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200/60 p-4">
+    <div className={`rounded-xl border p-4 ${
+      theme === 'dark'
+        ? 'bg-gradient-to-r from-amber-500/5 to-orange-500/5 border-amber-500/20'
+        : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200/60'
+    }`}>
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-          <Bell size={16} className="text-amber-600" />
+        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+          <Bell size={16} className="text-amber-400" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-slate-900">Follow Up Today</h3>
-          <p className="text-xs text-slate-500">
-            {overdue.length > 0 && <span className="text-rose-600 font-medium">{overdue.length} overdue</span>}
+          <h3 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>Follow Up Today</h3>
+          <p className="text-xs text-surface-500">
+            {overdue.length > 0 && <span className="text-rose-400 font-medium">{overdue.length} overdue</span>}
             {overdue.length > 0 && today.length > 0 && ' · '}
             {today.length > 0 && <span>{today.length} due today</span>}
           </p>
@@ -230,19 +240,23 @@ export function FollowUpToday({ reminders, companies, onCompleteReminder }: {
           const info = getContactInfo(reminder.contactId);
           const isOverdue = new Date(reminder.dueDate) < now;
           return (
-            <div key={reminder.id} className="flex items-center gap-2 bg-white/80 rounded-lg p-2.5 border border-amber-100">
+            <div key={reminder.id} className={`flex items-center gap-2 rounded-lg p-2.5 border ${
+              theme === 'dark'
+                ? 'bg-white/[0.03] border-amber-500/10'
+                : 'bg-white/80 border-amber-100'
+            }`}>
               <button
                 onClick={() => onCompleteReminder(reminder.id)}
-                className="w-5 h-5 rounded-full border-2 border-amber-300 shrink-0 flex items-center justify-center hover:bg-emerald-500 hover:border-emerald-500 transition-colors group"
+                className="w-5 h-5 rounded-full border-2 border-amber-400/50 shrink-0 flex items-center justify-center hover:bg-emerald-500 hover:border-emerald-500 transition-colors group"
               >
                 <Check size={10} className="text-transparent group-hover:text-white" />
               </button>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-slate-800 truncate">{info.name}</p>
-                <p className="text-[10px] text-slate-500 truncate">{info.company}{reminder.note ? ` - ${reminder.note}` : ''}</p>
+                <p className={`text-xs font-medium truncate ${theme === 'dark' ? 'text-surface-200' : 'text-surface-800'}`}>{info.name}</p>
+                <p className="text-[10px] text-surface-500 truncate">{info.company}{reminder.note ? ` - ${reminder.note}` : ''}</p>
               </div>
               {isOverdue && (
-                <span className="shrink-0 px-1.5 py-0.5 bg-rose-100 text-rose-700 rounded text-[10px] font-bold">
+                <span className="shrink-0 px-1.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded text-[10px] font-bold">
                   Overdue
                 </span>
               )}
@@ -250,7 +264,7 @@ export function FollowUpToday({ reminders, companies, onCompleteReminder }: {
           );
         })}
         {todayReminders.length > 5 && (
-          <p className="text-xs text-amber-600 font-medium text-center">+{todayReminders.length - 5} more</p>
+          <p className="text-xs text-amber-400 font-medium text-center">+{todayReminders.length - 5} more</p>
         )}
       </div>
     </div>

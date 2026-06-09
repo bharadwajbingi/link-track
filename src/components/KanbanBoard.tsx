@@ -5,6 +5,7 @@ import { GripVertical, User, Building2 } from 'lucide-react';
 interface KanbanBoardProps {
   companies: Company[];
   tags: Tag[];
+  theme?: string;
   onMoveContact: (companyId: string, contactId: string, newStage: PipelineStage) => void;
   onSelectContact: (companyId: string, contactId: string) => void;
 }
@@ -14,7 +15,7 @@ interface ContactWithCompany extends Contact {
   companyName: string;
 }
 
-export function KanbanBoard({ companies, tags, onMoveContact, onSelectContact }: KanbanBoardProps) {
+export function KanbanBoard({ companies, tags, theme = 'dark', onMoveContact, onSelectContact }: KanbanBoardProps) {
   const [draggedContact, setDraggedContact] = useState<ContactWithCompany | null>(null);
   const [dragOverStage, setDragOverStage] = useState<PipelineStage | null>(null);
 
@@ -66,23 +67,29 @@ export function KanbanBoard({ companies, tags, onMoveContact, onSelectContact }:
               key={stage.value}
               className={`w-72 flex-shrink-0 rounded-xl border transition-all duration-200 ${
                 isDragOver
-                  ? 'border-emerald-400 bg-emerald-50/50 shadow-lg shadow-emerald-500/10'
-                  : 'border-slate-200 bg-slate-50/80'
+                  ? 'border-brand-400/50 shadow-glow-brand-lg'
+                  : ''
+              } ${
+                theme === 'dark'
+                  ? `bg-white/[0.02] border-white/[0.06] ${isDragOver ? 'bg-brand-500/5' : ''}`
+                  : `bg-surface-50/80 border-surface-200/60 ${isDragOver ? 'bg-brand-50/50' : ''}`
               }`}
               onDragOver={(e) => handleDragOver(e, stage.value)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, stage.value)}
             >
-              <div className="px-4 py-3 border-b border-slate-200/60">
+              <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'border-white/[0.06]' : 'border-surface-200/60'}`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: stage.color }}
+                      className="w-3 h-3 rounded-full shadow-lg"
+                      style={{ backgroundColor: stage.color, boxShadow: `0 0 8px ${stage.color}40` }}
                     />
-                    <h3 className="text-sm font-semibold text-slate-800">{stage.label}</h3>
+                    <h3 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-surface-800'}`}>{stage.label}</h3>
                   </div>
-                  <span className="text-xs font-medium text-slate-400 bg-slate-200/60 px-2 py-0.5 rounded-full">
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    theme === 'dark' ? 'text-surface-400 bg-white/[0.06]' : 'text-surface-500 bg-surface-200/60'
+                  }`}>
                     {stageContacts.length}
                   </span>
                 </div>
@@ -90,7 +97,7 @@ export function KanbanBoard({ companies, tags, onMoveContact, onSelectContact }:
 
               <div className="p-2 space-y-2 min-h-[200px] max-h-[60vh] overflow-y-auto">
                 {stageContacts.length === 0 && (
-                  <div className="flex items-center justify-center h-32 text-xs text-slate-400">
+                  <div className={`flex items-center justify-center h-32 text-xs ${theme === 'dark' ? 'text-surface-600' : 'text-surface-400'}`}>
                     Drop contacts here
                   </div>
                 )}
@@ -100,23 +107,27 @@ export function KanbanBoard({ companies, tags, onMoveContact, onSelectContact }:
                     draggable
                     onDragStart={(e) => handleDragStart(e, contact)}
                     onClick={() => onSelectContact(contact.companyId, contact.id)}
-                    className={`bg-white rounded-lg border border-slate-200/80 p-3 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-slate-300 transition-all group ${
+                    className={`rounded-lg border p-3 cursor-grab active:cursor-grabbing transition-all group ${
                       draggedContact?.id === contact.id ? 'opacity-50 scale-95' : ''
+                    } ${
+                      theme === 'dark'
+                        ? 'bg-surface-900/80 border-white/[0.06] hover:border-brand-500/30 hover:shadow-glow-brand'
+                        : 'bg-white border-surface-200/80 hover:shadow-elevated hover:border-brand-200'
                     }`}
                   >
                     <div className="flex items-start gap-2">
-                      <GripVertical size={14} className="text-slate-300 mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <GripVertical size={14} className="text-surface-500 mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <User size={12} className="text-slate-400 shrink-0" />
-                          <p className="text-sm font-medium text-slate-800 truncate">{contact.name}</p>
+                          <User size={12} className={theme === 'dark' ? 'text-surface-500' : 'text-surface-400'} />
+                          <p className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-surface-800'}`}>{contact.name}</p>
                         </div>
                         {contact.title && (
-                          <p className="text-xs text-slate-500 mt-0.5 truncate">{contact.title}</p>
+                          <p className={`text-xs mt-0.5 truncate ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>{contact.title}</p>
                         )}
                         <div className="flex items-center gap-1 mt-1.5">
-                          <Building2 size={10} className="text-slate-400" />
-                          <span className="text-xs text-slate-400 truncate">{contact.companyName}</span>
+                          <Building2 size={10} className={theme === 'dark' ? 'text-surface-500' : 'text-surface-400'} />
+                          <span className={`text-xs truncate ${theme === 'dark' ? 'text-surface-500' : 'text-surface-400'}`}>{contact.companyName}</span>
                         </div>
                         {contact.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
@@ -134,7 +145,7 @@ export function KanbanBoard({ companies, tags, onMoveContact, onSelectContact }:
                               );
                             })}
                             {contact.tags.length > 3 && (
-                              <span className="text-[10px] text-slate-400">+{contact.tags.length - 3}</span>
+                              <span className="text-[10px] text-surface-400">+{contact.tags.length - 3}</span>
                             )}
                           </div>
                         )}

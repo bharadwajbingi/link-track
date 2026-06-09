@@ -7,9 +7,10 @@ interface ActivityLogProps {
   notes: ActivityNote[];
   onAddNote: (contactId: string, text: string, type: ActivityNote['type']) => void;
   onDeleteNote: (noteId: string) => void;
+  theme?: string;
 }
 
-export function ActivityLog({ contactId, notes, onAddNote, onDeleteNote }: ActivityLogProps) {
+export function ActivityLog({ contactId, notes, onAddNote, onDeleteNote, theme = 'dark' }: ActivityLogProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [text, setText] = useState('');
   const [type, setType] = useState<ActivityNote['type']>('note');
@@ -42,13 +43,13 @@ export function ActivityLog({ contactId, notes, onAddNote, onDeleteNote }: Activ
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+        <h4 className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 ${theme === 'dark' ? 'text-surface-500' : 'text-surface-600'}`}>
           <MessageCircle size={12} />
           Activity Log
         </h4>
         <button
           onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+          className="flex items-center gap-1 text-xs font-medium text-brand-400 hover:text-brand-300 transition-colors"
         >
           <Plus size={12} />
           Add Note
@@ -56,16 +57,20 @@ export function ActivityLog({ contactId, notes, onAddNote, onDeleteNote }: Activ
       </div>
 
       {isAdding && (
-        <div className="bg-slate-50 rounded-lg border border-slate-200 p-3 space-y-2 animate-in">
+        <div className={`rounded-lg border p-3 space-y-2 animate-in ${
+          theme === 'dark' ? 'bg-white/[0.03] border-white/[0.06]' : 'bg-surface-50 border-surface-200'
+        }`}>
           <div className="flex gap-2 flex-wrap">
             {ACTIVITY_TYPES.map(at => (
               <button
                 key={at.value}
                 onClick={() => setType(at.value)}
-                className={`px-2 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                className={`px-2 py-1 rounded-md text-[11px] font-medium transition-colors border ${
                   type === at.value
-                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
+                    ? 'bg-brand-500/10 text-brand-400 border-brand-500/20'
+                    : theme === 'dark'
+                      ? 'bg-white/[0.03] text-surface-400 border-white/[0.06] hover:border-white/[0.12]'
+                      : 'bg-white text-surface-600 border-surface-200 hover:border-surface-300'
                 }`}
               >
                 {at.emoji} {at.label}
@@ -77,20 +82,20 @@ export function ActivityLog({ contactId, notes, onAddNote, onDeleteNote }: Activ
             onChange={e => setText(e.target.value)}
             placeholder="What happened?"
             rows={2}
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
+            className={`resize-none ${theme === 'dark' ? 'input-premium' : 'input-premium-light'}`}
             autoFocus
           />
           <div className="flex justify-end gap-2">
             <button
               onClick={() => { setIsAdding(false); setText(''); }}
-              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              className={theme === 'dark' ? 'btn-secondary text-xs' : 'btn-secondary-light text-xs'}
             >
               Cancel
             </button>
             <button
               onClick={handleAdd}
               disabled={!text.trim()}
-              className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-40 transition-colors"
+              className="btn-primary text-xs !px-3 !py-1.5"
             >
               Save
             </button>
@@ -99,22 +104,24 @@ export function ActivityLog({ contactId, notes, onAddNote, onDeleteNote }: Activ
       )}
 
       {contactNotes.length === 0 && !isAdding && (
-        <p className="text-xs text-slate-400 py-2">No activity logged yet</p>
+        <p className={`text-xs py-2 ${theme === 'dark' ? 'text-surface-600' : 'text-surface-400'}`}>No activity logged yet</p>
       )}
 
       <div className="space-y-1.5 max-h-60 overflow-y-auto">
         {contactNotes.map(note => {
           const typeInfo = ACTIVITY_TYPES.find(t => t.value === note.type) || ACTIVITY_TYPES[0];
           return (
-            <div key={note.id} className="flex items-start gap-2 group py-1.5 px-2 rounded-lg hover:bg-slate-50 transition-colors">
+            <div key={note.id} className={`flex items-start gap-2 group py-1.5 px-2 rounded-lg transition-colors ${
+              theme === 'dark' ? 'hover:bg-white/[0.03]' : 'hover:bg-surface-50'
+            }`}>
               <span className="text-sm shrink-0 mt-0.5">{typeInfo.emoji}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-slate-700">{note.text}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">{formatDate(note.createdAt)}</p>
+                <p className={`text-xs ${theme === 'dark' ? 'text-surface-300' : 'text-surface-700'}`}>{note.text}</p>
+                <p className={`text-[10px] mt-0.5 ${theme === 'dark' ? 'text-surface-600' : 'text-surface-400'}`}>{formatDate(note.createdAt)}</p>
               </div>
               <button
                 onClick={() => onDeleteNote(note.id)}
-                className="p-1 rounded hover:bg-rose-50 text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100 shrink-0"
+                className="p-1 rounded hover:bg-rose-500/10 text-surface-500 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100 shrink-0"
               >
                 <Trash2 size={11} />
               </button>

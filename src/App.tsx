@@ -3,10 +3,11 @@ import {
   Building2, Plus, Trash2, Pencil, ChevronRight, ExternalLink, Copy,
   Users, Clock, CheckCircle2, BarChart3, Home, Download, Upload,
   Search, MessageSquare, X, Menu, LogOut, Bell,
-  FileSpreadsheet, TrendingUp, LayoutGrid,
+  FileSpreadsheet, TrendingUp, LayoutGrid, Moon, Sun,
 } from 'lucide-react';
 import { AppData, Company, Contact, ContactStatus, PipelineStage, ActivityNote, DEFAULT_TAGS } from './types';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import { useTheme } from './hooks/useTheme';
 import {
   addCompany, updateCompany, deleteCompany,
   addContact, updateContact, updateContactStatus, updateContactPipelineStage,
@@ -58,23 +59,23 @@ type View =
 function DatabaseSyncBadge({ status }: { status: 'syncing' | 'synced' | 'local' }) {
   if (status === 'syncing') {
     return (
-      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200/60 animate-pulse">
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-semibold border border-amber-500/20 animate-pulse dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
         <span className="hidden sm:inline">Syncing</span>
       </div>
     );
   }
   if (status === 'synced') {
     return (
-      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200/60">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold border border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
         <span className="hidden sm:inline">Synced</span>
       </div>
     );
   }
   return (
-    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200/60">
-      <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-500/10 text-surface-400 text-xs font-semibold border border-surface-500/20 dark:bg-surface-500/10 dark:text-surface-400 dark:border-surface-500/20">
+      <span className="w-1.5 h-1.5 rounded-full bg-surface-400" />
       <span className="hidden sm:inline">Local</span>
     </div>
   );
@@ -88,6 +89,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
   const [syncStatus, setSyncStatus] = useState<'syncing' | 'synced' | 'local'>('syncing');
+  const [theme, toggleTheme] = useTheme();
 
   const showToast = (message: string) => setToast({ message, visible: true });
 
@@ -140,7 +142,6 @@ export default function App() {
     loadData();
   }, [user]);
 
-  // Ensure data has all required fields (migration support)
   useEffect(() => {
     if (!data.tags) {
       setData(prev => ({ ...prev, tags: DEFAULT_TAGS, activityNotes: prev.activityNotes || [], reminders: prev.reminders || [] }));
@@ -166,7 +167,7 @@ export default function App() {
 
   const openAddCompany = () => setCompanyModal({ open: true, editId: null, name: '' });
   const openEditCompany = (c: Company) => setCompanyModal({ open: true, editId: c.id, name: c.name });
-  
+
   const saveCompany = async () => {
     if (!companyModal.name.trim() || !user) return;
     if (companyModal.editId) {
@@ -201,7 +202,7 @@ export default function App() {
     open: true, editContact: c, name: c.name, title: c.title, linkedinUrl: c.linkedinUrl,
     draftMessage: c.draftMessage, tags: c.tags || [], pipelineStage: c.pipelineStage || 'cold_email',
   });
-  
+
   const saveContact = async () => {
     if (!contactModal.name.trim() || !selectedCompany) return;
     const compId = selectedCompany.id;
@@ -311,7 +312,6 @@ export default function App() {
     setData(newData);
     setCsvModalOpen(false);
     showToast(`Imported ${rows.length} contacts successfully`);
-    // Bulk sync would happen on next load
   };
 
   const copyMessage = async (msg: string) => {
@@ -368,10 +368,13 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-surface-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <span className="w-8 h-8 border-3 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
-          <p className="text-sm text-slate-400">Loading...</p>
+          <div className="relative">
+            <span className="w-10 h-10 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin block" />
+            <div className="absolute inset-0 w-10 h-10 rounded-full bg-brand-500/10 blur-xl" />
+          </div>
+          <p className="text-sm text-surface-400 font-medium">Loading...</p>
         </div>
       </div>
     );
@@ -382,22 +385,26 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className={`min-h-screen flex ${theme === 'dark' ? 'bg-surface-950' : 'bg-surface-50'}`}>
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-72 bg-slate-900 flex flex-col transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="px-5 py-5 border-b border-slate-800">
+      <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-72 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} ${
+        theme === 'dark'
+          ? 'bg-surface-900/95 backdrop-blur-xl border-r border-white/[0.06]'
+          : 'bg-white/90 backdrop-blur-xl border-r border-surface-200/80'
+      }`}>
+        <div className={`px-5 py-5 border-b ${theme === 'dark' ? 'border-white/[0.06]' : 'border-surface-200/60'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <div className="w-9 h-9 bg-gradient-to-br from-brand-500 to-violet-500 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/25">
                 <Users size={16} className="text-white" />
               </div>
-              <span className="text-white font-bold text-lg tracking-tight">LinkTrack</span>
+              <span className={`font-bold text-lg tracking-tight ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>LinkTrack</span>
             </div>
-            <button className="lg:hidden text-slate-400 hover:text-white" onClick={() => setSidebarOpen(false)}>
+            <button className="lg:hidden text-surface-400 hover:text-white" onClick={() => setSidebarOpen(false)}>
               <X size={20} />
             </button>
           </div>
@@ -408,18 +415,21 @@ export default function App() {
             active={view.type === 'dashboard'}
             icon={<Home size={16} />}
             label="Dashboard"
+            theme={theme}
             onClick={() => { setView({ type: 'dashboard' }); setSidebarOpen(false); }}
           />
           <NavButton
             active={view.type === 'kanban'}
             icon={<LayoutGrid size={16} />}
             label="Pipeline"
+            theme={theme}
             onClick={() => { setView({ type: 'kanban' }); setSidebarOpen(false); }}
           />
           <NavButton
             active={view.type === 'analytics'}
             icon={<TrendingUp size={16} />}
             label="Analytics"
+            theme={theme}
             onClick={() => { setView({ type: 'analytics' }); setSidebarOpen(false); }}
           />
           <NavButton
@@ -427,14 +437,15 @@ export default function App() {
             icon={<Bell size={16} />}
             label="Reminders"
             badge={overdueCount > 0 ? overdueCount : undefined}
+            theme={theme}
             onClick={() => { setView({ type: 'reminders' }); setSidebarOpen(false); }}
           />
         </div>
 
         <div className="px-4 py-2 mt-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Companies</span>
-            <button onClick={openAddCompany} className="p-1 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-emerald-400 transition-colors">
+            <span className={`text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-surface-500' : 'text-surface-400'}`}>Companies</span>
+            <button onClick={openAddCompany} className="p-1 rounded-lg hover:bg-brand-500/10 text-surface-500 hover:text-brand-400 transition-colors">
               <Plus size={16} />
             </button>
           </div>
@@ -442,7 +453,7 @@ export default function App() {
 
         <nav className="flex-1 overflow-y-auto px-3 pb-3 space-y-0.5">
           {data.companies.length === 0 && (
-            <p className="px-3 py-6 text-xs text-slate-600 text-center">No companies yet</p>
+            <p className={`px-3 py-6 text-xs text-center ${theme === 'dark' ? 'text-surface-600' : 'text-surface-400'}`}>No companies yet</p>
           )}
           {data.companies.map(c => {
             const cs = getCompanyStats(c);
@@ -452,12 +463,18 @@ export default function App() {
                 key={c.id}
                 onClick={() => { setView({ type: 'company', companyId: c.id }); setSearchQuery(''); setSidebarOpen(false); }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all group ${
-                  isActive ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  isActive
+                    ? theme === 'dark'
+                      ? 'bg-brand-500/10 text-white border border-brand-500/20'
+                      : 'bg-brand-50 text-brand-700 border border-brand-200/60'
+                    : theme === 'dark'
+                      ? 'text-surface-400 hover:text-surface-200 hover:bg-white/[0.04]'
+                      : 'text-surface-600 hover:text-surface-900 hover:bg-surface-100/80'
                 }`}
               >
-                <Building2 size={15} className={isActive ? 'text-emerald-400' : 'text-slate-600 group-hover:text-slate-400'} />
+                <Building2 size={15} className={isActive ? 'text-brand-400' : theme === 'dark' ? 'text-surface-600 group-hover:text-surface-400' : 'text-surface-400 group-hover:text-surface-600'} />
                 <span className="flex-1 text-left truncate font-medium">{c.name}</span>
-                <span className={`text-xs tabular-nums ${isActive ? 'text-slate-400' : 'text-slate-600'}`}>
+                <span className={`text-xs tabular-nums ${isActive ? (theme === 'dark' ? 'text-brand-300' : 'text-brand-500') : 'text-surface-500'}`}>
                   {cs.accepted}/{cs.total}
                 </span>
               </button>
@@ -465,20 +482,20 @@ export default function App() {
           })}
         </nav>
 
-        <div className="px-3 py-3 border-t border-slate-800 space-y-1">
-          <button onClick={() => setCsvModalOpen(true)} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 transition-colors">
+        <div className={`px-3 py-3 border-t space-y-1 ${theme === 'dark' ? 'border-white/[0.06]' : 'border-surface-200/60'}`}>
+          <button onClick={() => setCsvModalOpen(true)} className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors ${theme === 'dark' ? 'text-surface-500 hover:text-surface-300 hover:bg-white/[0.04]' : 'text-surface-500 hover:text-surface-700 hover:bg-surface-100'}`}>
             <FileSpreadsheet size={15} /> CSV Import
           </button>
-          <button onClick={handleExport} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 transition-colors">
+          <button onClick={handleExport} className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors ${theme === 'dark' ? 'text-surface-500 hover:text-surface-300 hover:bg-white/[0.04]' : 'text-surface-500 hover:text-surface-700 hover:bg-surface-100'}`}>
             <Download size={15} /> Export Data
           </button>
-          <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 transition-colors">
+          <button onClick={() => fileInputRef.current?.click()} className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors ${theme === 'dark' ? 'text-surface-500 hover:text-surface-300 hover:bg-white/[0.04]' : 'text-surface-500 hover:text-surface-700 hover:bg-surface-100'}`}>
             <Upload size={15} /> Import JSON
           </button>
           <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
-          
-          <div className="pt-2 border-t border-slate-800 mt-2">
-            <div className="px-3 py-1.5 text-xs text-slate-600 truncate">
+
+          <div className={`pt-2 border-t mt-2 ${theme === 'dark' ? 'border-white/[0.06]' : 'border-surface-200/60'}`}>
+            <div className={`px-3 py-1.5 text-xs truncate ${theme === 'dark' ? 'text-surface-600' : 'text-surface-400'}`}>
               {user.email}
             </div>
             <button
@@ -486,7 +503,7 @@ export default function App() {
                 await supabase.auth.signOut();
                 setData(getInitialData());
               }}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-rose-500 hover:text-rose-400 hover:bg-rose-950/20 transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
             >
               <LogOut size={15} /> Sign Out
             </button>
@@ -496,31 +513,47 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1 min-w-0">
-        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200/60">
+        <header className={`sticky top-0 z-20 backdrop-blur-xl border-b ${
+          theme === 'dark'
+            ? 'bg-surface-950/80 border-white/[0.06]'
+            : 'bg-white/80 border-surface-200/60'
+        }`}>
           <div className="flex items-center justify-between px-4 sm:px-6 py-3">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <button className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-slate-100 text-slate-500" onClick={() => setSidebarOpen(true)}>
+              <button className={`lg:hidden p-2 -ml-2 rounded-lg ${theme === 'dark' ? 'hover:bg-white/[0.06] text-surface-400' : 'hover:bg-surface-100 text-surface-500'}`} onClick={() => setSidebarOpen(true)}>
                 <Menu size={20} />
               </button>
-              {view.type === 'dashboard' && <h1 className="text-lg font-semibold text-slate-900">Dashboard</h1>}
-              {view.type === 'kanban' && <h1 className="text-lg font-semibold text-slate-900">Pipeline</h1>}
-              {view.type === 'analytics' && <h1 className="text-lg font-semibold text-slate-900">Analytics</h1>}
-              {view.type === 'reminders' && <h1 className="text-lg font-semibold text-slate-900">Reminders</h1>}
+              {view.type === 'dashboard' && <h1 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>Dashboard</h1>}
+              {view.type === 'kanban' && <h1 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>Pipeline</h1>}
+              {view.type === 'analytics' && <h1 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>Analytics</h1>}
+              {view.type === 'reminders' && <h1 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>Reminders</h1>}
               {selectedCompany && (
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <h1 className="text-lg font-semibold text-slate-900 truncate">{selectedCompany.name}</h1>
+                  <h1 className={`text-lg font-semibold truncate ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>{selectedCompany.name}</h1>
                   <div className="flex items-center gap-1 ml-2 shrink-0">
-                    <button onClick={() => openEditCompany(selectedCompany)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                    <button onClick={() => openEditCompany(selectedCompany)} className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'hover:bg-white/[0.06] text-surface-400 hover:text-surface-200' : 'hover:bg-surface-100 text-surface-400 hover:text-surface-600'}`}>
                       <Pencil size={15} />
                     </button>
-                    <button onClick={() => setDeleteConfirm({ type: 'company', id: selectedCompany.id })} className="p-2 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors">
+                    <button onClick={() => setDeleteConfirm({ type: 'company', id: selectedCompany.id })} className="p-2 rounded-lg hover:bg-rose-500/10 text-surface-400 hover:text-rose-400 transition-colors">
                       <Trash2 size={15} />
                     </button>
                   </div>
                 </div>
               )}
             </div>
-            <div className="shrink-0 ml-4">
+            <div className="flex items-center gap-3 shrink-0 ml-4">
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className={`p-2 rounded-xl transition-all duration-200 ${
+                  theme === 'dark'
+                    ? 'hover:bg-white/[0.06] text-surface-400 hover:text-brand-400'
+                    : 'hover:bg-surface-100 text-surface-500 hover:text-brand-600'
+                }`}
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
               <DatabaseSyncBadge status={syncStatus} />
             </div>
           </div>
@@ -531,6 +564,7 @@ export default function App() {
             <DashboardView
               data={data}
               stats={stats}
+              theme={theme}
               onSelectCompany={id => setView({ type: 'company', companyId: id })}
               onCopyMessage={copyMessage}
               onChangeStatus={changeStatus}
@@ -541,16 +575,18 @@ export default function App() {
             <KanbanBoard
               companies={data.companies}
               tags={data.tags || DEFAULT_TAGS}
+              theme={theme}
               onMoveContact={changePipelineStage}
               onSelectContact={(companyId, contactId) => setContactDetailId({ companyId, contactId })}
             />
           )}
           {view.type === 'analytics' && (
-            <AnalyticsDashboard data={data} />
+            <AnalyticsDashboard data={data} theme={theme} />
           )}
           {view.type === 'reminders' && (
             <RemindersView
               data={data}
+              theme={theme}
               onCompleteReminder={handleCompleteReminder}
               onDeleteReminder={handleDeleteReminder}
             />
@@ -559,6 +595,7 @@ export default function App() {
             <CompanyView
               company={selectedCompany}
               data={data}
+              theme={theme}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               filteredContacts={filteredContacts}
@@ -579,6 +616,7 @@ export default function App() {
           companyId={contactDetailId.companyId}
           contactId={contactDetailId.contactId}
           data={data}
+          theme={theme}
           onClose={() => setContactDetailId(null)}
           onAddNote={handleAddActivityNote}
           onDeleteNote={handleDeleteActivityNote}
@@ -593,25 +631,26 @@ export default function App() {
         open={companyModal.open}
         onClose={() => setCompanyModal({ open: false, editId: null, name: '' })}
         title={companyModal.editId ? 'Edit Company' : 'Add Company'}
+        theme={theme}
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Company Name</label>
+            <label className={`block text-sm font-medium mb-1.5 ${theme === 'dark' ? 'text-surface-300' : 'text-surface-700'}`}>Company Name</label>
             <input
               type="text"
               value={companyModal.name}
               onChange={e => setCompanyModal(m => ({ ...m, name: e.target.value }))}
               onKeyDown={e => e.key === 'Enter' && saveCompany()}
               placeholder="e.g. Google, Stripe, Figma..."
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-shadow"
+              className={theme === 'dark' ? 'input-premium' : 'input-premium-light'}
               autoFocus
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button onClick={() => setCompanyModal({ open: false, editId: null, name: '' })} className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+            <button onClick={() => setCompanyModal({ open: false, editId: null, name: '' })} className={theme === 'dark' ? 'btn-secondary' : 'btn-secondary-light'}>
               Cancel
             </button>
-            <button onClick={saveCompany} disabled={!companyModal.name.trim()} className="px-5 py-2 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            <button onClick={saveCompany} disabled={!companyModal.name.trim()} className="btn-primary">
               {companyModal.editId ? 'Save' : 'Add Company'}
             </button>
           </div>
@@ -622,45 +661,46 @@ export default function App() {
         open={contactModal.open}
         onClose={() => setContactModal({ open: false, editContact: null, name: '', title: '', linkedinUrl: '', draftMessage: '', tags: [], pipelineStage: 'cold_email' })}
         title={contactModal.editContact ? 'Edit Contact' : 'Add Contact'}
+        theme={theme}
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Name</label>
+            <label className={`block text-sm font-medium mb-1.5 ${theme === 'dark' ? 'text-surface-300' : 'text-surface-700'}`}>Name</label>
             <input
               type="text"
               value={contactModal.name}
               onChange={e => setContactModal(m => ({ ...m, name: e.target.value }))}
               placeholder="Full name"
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-shadow"
+              className={theme === 'dark' ? 'input-premium' : 'input-premium-light'}
               autoFocus
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Job Title</label>
+            <label className={`block text-sm font-medium mb-1.5 ${theme === 'dark' ? 'text-surface-300' : 'text-surface-700'}`}>Job Title</label>
             <input
               type="text"
               value={contactModal.title}
               onChange={e => setContactModal(m => ({ ...m, title: e.target.value }))}
               placeholder="e.g. Senior Engineer, Product Manager..."
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-shadow"
+              className={theme === 'dark' ? 'input-premium' : 'input-premium-light'}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">LinkedIn Profile URL</label>
+            <label className={`block text-sm font-medium mb-1.5 ${theme === 'dark' ? 'text-surface-300' : 'text-surface-700'}`}>LinkedIn Profile URL</label>
             <input
               type="url"
               value={contactModal.linkedinUrl}
               onChange={e => setContactModal(m => ({ ...m, linkedinUrl: e.target.value }))}
               placeholder="https://linkedin.com/in/..."
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-shadow"
+              className={theme === 'dark' ? 'input-premium' : 'input-premium-light'}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Pipeline Stage</label>
+            <label className={`block text-sm font-medium mb-1.5 ${theme === 'dark' ? 'text-surface-300' : 'text-surface-700'}`}>Pipeline Stage</label>
             <select
               value={contactModal.pipelineStage}
               onChange={e => setContactModal(m => ({ ...m, pipelineStage: e.target.value as PipelineStage }))}
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
+              className={theme === 'dark' ? 'input-premium' : 'input-premium-light'}
             >
               <option value="cold_email">Cold Email</option>
               <option value="applied">Applied</option>
@@ -671,10 +711,11 @@ export default function App() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Tags</label>
+            <label className={`block text-sm font-medium mb-1.5 ${theme === 'dark' ? 'text-surface-300' : 'text-surface-700'}`}>Tags</label>
             <TagManager
               tags={data.tags || DEFAULT_TAGS}
               selectedTags={contactModal.tags}
+              theme={theme}
               onToggleTag={(tagId) => {
                 setContactModal(m => ({
                   ...m,
@@ -687,48 +728,49 @@ export default function App() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Draft Outreach Message</label>
+            <label className={`block text-sm font-medium mb-1.5 ${theme === 'dark' ? 'text-surface-300' : 'text-surface-700'}`}>Draft Outreach Message</label>
             <textarea
               value={contactModal.draftMessage}
               onChange={e => setContactModal(m => ({ ...m, draftMessage: e.target.value }))}
               placeholder="Write your cold outreach message here..."
               rows={4}
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-shadow resize-none"
+              className={`resize-none ${theme === 'dark' ? 'input-premium' : 'input-premium-light'}`}
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button onClick={() => setContactModal({ open: false, editContact: null, name: '', title: '', linkedinUrl: '', draftMessage: '', tags: [], pipelineStage: 'cold_email' })} className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+            <button onClick={() => setContactModal({ open: false, editContact: null, name: '', title: '', linkedinUrl: '', draftMessage: '', tags: [], pipelineStage: 'cold_email' })} className={theme === 'dark' ? 'btn-secondary' : 'btn-secondary-light'}>
               Cancel
             </button>
-            <button onClick={saveContact} disabled={!contactModal.name.trim()} className="px-5 py-2 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            <button onClick={saveContact} disabled={!contactModal.name.trim()} className="btn-primary">
               {contactModal.editContact ? 'Save' : 'Add Contact'}
             </button>
           </div>
         </div>
       </Modal>
 
-      <Modal open={csvModalOpen} onClose={() => setCsvModalOpen(false)} title="Import from CSV">
-        <CSVImport onImport={handleCSVImport} onClose={() => setCsvModalOpen(false)} />
+      <Modal open={csvModalOpen} onClose={() => setCsvModalOpen(false)} title="Import from CSV" theme={theme}>
+        <CSVImport onImport={handleCSVImport} onClose={() => setCsvModalOpen(false)} theme={theme} />
       </Modal>
 
       <Modal
         open={deleteConfirm !== null}
         onClose={() => setDeleteConfirm(null)}
         title="Confirm Delete"
+        theme={theme}
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className={`text-sm ${theme === 'dark' ? 'text-surface-400' : 'text-surface-600'}`}>
             {deleteConfirm?.type === 'company'
               ? 'Delete this company and all its contacts? This cannot be undone.'
               : 'Delete this contact? This cannot be undone.'}
           </p>
           <div className="flex justify-end gap-2 pt-2">
-            <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
+            <button onClick={() => setDeleteConfirm(null)} className={theme === 'dark' ? 'btn-secondary' : 'btn-secondary-light'}>
               Cancel
             </button>
             <button
               onClick={deleteConfirm?.type === 'company' ? confirmDeleteCompany : confirmDeleteContact}
-              className="px-5 py-2 rounded-xl text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 transition-colors"
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-rose-600 to-rose-500 text-white hover:from-rose-500 hover:to-rose-400 transition-all active:scale-[0.98]"
             >
               Delete
             </button>
@@ -736,25 +778,31 @@ export default function App() {
         </div>
       </Modal>
 
-      <Toast message={toast.message} visible={toast.visible} onClose={() => setToast({ message: '', visible: false })} />
+      <Toast message={toast.message} visible={toast.visible} theme={theme} onClose={() => setToast({ message: '', visible: false })} />
     </div>
   );
 }
 
-function NavButton({ active, icon, label, badge, onClick }: {
-  active: boolean; icon: React.ReactNode; label: string; badge?: number; onClick: () => void;
+function NavButton({ active, icon, label, badge, theme, onClick }: {
+  active: boolean; icon: React.ReactNode; label: string; badge?: number; theme: string; onClick: () => void;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-        active ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+        active
+          ? theme === 'dark'
+            ? 'bg-gradient-to-r from-brand-500/15 to-violet-500/10 text-white border border-brand-500/20 shadow-glow-brand'
+            : 'bg-brand-50 text-brand-700 border border-brand-200/60'
+          : theme === 'dark'
+            ? 'text-surface-400 hover:text-surface-200 hover:bg-white/[0.04]'
+            : 'text-surface-600 hover:text-surface-900 hover:bg-surface-100'
       }`}
     >
-      {icon}
+      <span className={active ? 'text-brand-400' : ''}>{icon}</span>
       <span className="flex-1 text-left">{label}</span>
       {badge !== undefined && badge > 0 && (
-        <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold min-w-[18px] text-center">
+        <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold min-w-[18px] text-center shadow-lg shadow-rose-500/30">
           {badge}
         </span>
       )}
@@ -763,8 +811,8 @@ function NavButton({ active, icon, label, badge, onClick }: {
 }
 
 // Contact Detail Drawer
-function ContactDetailDrawer({ companyId, contactId, data, onClose, onAddNote, onDeleteNote, onAddReminder, onCompleteReminder, onDeleteReminder }: {
-  companyId: string; contactId: string; data: AppData; onClose: () => void;
+function ContactDetailDrawer({ companyId, contactId, data, theme, onClose, onAddNote, onDeleteNote, onAddReminder, onCompleteReminder, onDeleteReminder }: {
+  companyId: string; contactId: string; data: AppData; theme: string; onClose: () => void;
   onAddNote: (contactId: string, text: string, type: ActivityNote['type']) => void;
   onDeleteNote: (noteId: string) => void;
   onAddReminder: (contactId: string, dueDate: string, note: string) => void;
@@ -781,21 +829,25 @@ function ContactDetailDrawer({ companyId, contactId, data, onClose, onAddNote, o
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col animate-in overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={onClose} />
+      <div className={`fixed inset-y-0 right-0 w-full max-w-md shadow-2xl z-50 flex flex-col animate-in overflow-hidden ${
+        theme === 'dark'
+          ? 'bg-surface-900 border-l border-white/[0.06]'
+          : 'bg-white border-l border-surface-200/60'
+      }`}>
+        <div className={`flex items-center justify-between px-6 py-4 border-b ${theme === 'dark' ? 'border-white/[0.06]' : 'border-surface-200/60'}`}>
           <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-slate-900 truncate">{contact.name}</h2>
-            <p className="text-xs text-slate-500">{contact.title} at {company.name}</p>
+            <h2 className={`text-lg font-semibold truncate ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>{contact.name}</h2>
+            <p className={`text-xs ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>{contact.title} at {company.name}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors shrink-0">
+          <button onClick={onClose} className={`p-2 rounded-lg transition-colors shrink-0 ${theme === 'dark' ? 'hover:bg-white/[0.06] text-surface-400 hover:text-white' : 'hover:bg-surface-100 text-surface-400 hover:text-surface-600'}`}>
             <X size={18} />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
           {contact.linkedinUrl && (
-            <a href={contact.linkedinUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 transition-colors">
+            <a href={contact.linkedinUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-brand-400 hover:text-brand-300 transition-colors">
               <ExternalLink size={14} /> LinkedIn Profile
             </a>
           )}
@@ -804,30 +856,32 @@ function ContactDetailDrawer({ companyId, contactId, data, onClose, onAddNote, o
             <TagBadges tags={contact.tags} allTags={data.tags || DEFAULT_TAGS} />
           )}
 
-          <div className="border-t border-slate-100 pt-4">
+          <div className={`border-t pt-4 ${theme === 'dark' ? 'border-white/[0.06]' : 'border-surface-200/60'}`}>
             <ReminderPanel
               reminders={contactReminders}
               companies={data.companies}
               contactId={contactId}
+              theme={theme}
               onAddReminder={onAddReminder}
               onCompleteReminder={onCompleteReminder}
               onDeleteReminder={onDeleteReminder}
             />
           </div>
 
-          <div className="border-t border-slate-100 pt-4">
+          <div className={`border-t pt-4 ${theme === 'dark' ? 'border-white/[0.06]' : 'border-surface-200/60'}`}>
             <ActivityLog
               contactId={contactId}
               notes={contactNotes}
+              theme={theme}
               onAddNote={onAddNote}
               onDeleteNote={onDeleteNote}
             />
           </div>
 
           {contact.draftMessage && (
-            <div className="border-t border-slate-100 pt-4">
-              <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Draft Message</h4>
-              <div className="bg-slate-50 rounded-lg p-3 text-xs text-slate-700 whitespace-pre-wrap">
+            <div className={`border-t pt-4 ${theme === 'dark' ? 'border-white/[0.06]' : 'border-surface-200/60'}`}>
+              <h4 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-surface-500' : 'text-surface-600'}`}>Draft Message</h4>
+              <div className={`rounded-lg p-3 text-xs whitespace-pre-wrap ${theme === 'dark' ? 'bg-white/[0.03] text-surface-300 border border-white/[0.06]' : 'bg-surface-50 text-surface-700 border border-surface-200/60'}`}>
                 {contact.draftMessage}
               </div>
             </div>
@@ -839,8 +893,9 @@ function ContactDetailDrawer({ companyId, contactId, data, onClose, onAddNote, o
 }
 
 // Reminders View
-function RemindersView({ data, onCompleteReminder, onDeleteReminder }: {
+function RemindersView({ data, theme, onCompleteReminder, onDeleteReminder }: {
   data: AppData;
+  theme: string;
   onCompleteReminder: (id: string) => void;
   onDeleteReminder: (id: string) => void;
 }) {
@@ -869,15 +924,15 @@ function RemindersView({ data, onCompleteReminder, onDeleteReminder }: {
     <div className="space-y-6">
       {active.length === 0 && completed.length === 0 && (
         <div className="text-center py-16">
-          <Bell size={40} className="mx-auto text-slate-300 mb-3" />
-          <p className="text-sm text-slate-500 mb-1">No reminders yet</p>
-          <p className="text-xs text-slate-400">Open a contact to set follow-up reminders</p>
+          <Bell size={40} className={`mx-auto mb-3 ${theme === 'dark' ? 'text-surface-700' : 'text-surface-300'}`} />
+          <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>No reminders yet</p>
+          <p className={`text-xs ${theme === 'dark' ? 'text-surface-600' : 'text-surface-400'}`}>Open a contact to set follow-up reminders</p>
         </div>
       )}
 
       {overdue.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold text-rose-700 mb-3 flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-rose-400 mb-3 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
             Overdue ({overdue.length})
           </h2>
@@ -885,7 +940,7 @@ function RemindersView({ data, onCompleteReminder, onDeleteReminder }: {
             {overdue.map(r => {
               const info = getContactInfo(r.contactId);
               return (
-                <ReminderCard key={r.id} reminder={r} info={info} formatDate={formatDate} isOverdue onComplete={onCompleteReminder} onDelete={onDeleteReminder} />
+                <ReminderCard key={r.id} reminder={r} info={info} formatDate={formatDate} isOverdue theme={theme} onComplete={onCompleteReminder} onDelete={onDeleteReminder} />
               );
             })}
           </div>
@@ -894,12 +949,12 @@ function RemindersView({ data, onCompleteReminder, onDeleteReminder }: {
 
       {upcoming.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">Upcoming ({upcoming.length})</h2>
+          <h2 className={`text-sm font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>Upcoming ({upcoming.length})</h2>
           <div className="space-y-2">
             {upcoming.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).map(r => {
               const info = getContactInfo(r.contactId);
               return (
-                <ReminderCard key={r.id} reminder={r} info={info} formatDate={formatDate} isOverdue={false} onComplete={onCompleteReminder} onDelete={onDeleteReminder} />
+                <ReminderCard key={r.id} reminder={r} info={info} formatDate={formatDate} isOverdue={false} theme={theme} onComplete={onCompleteReminder} onDelete={onDeleteReminder} />
               );
             })}
           </div>
@@ -908,18 +963,20 @@ function RemindersView({ data, onCompleteReminder, onDeleteReminder }: {
 
       {completed.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold text-slate-500 mb-3">Completed ({completed.length})</h2>
+          <h2 className={`text-sm font-semibold mb-3 ${theme === 'dark' ? 'text-surface-500' : 'text-surface-500'}`}>Completed ({completed.length})</h2>
           <div className="space-y-2 opacity-60">
             {completed.slice(0, 10).map(r => {
               const info = getContactInfo(r.contactId);
               return (
-                <div key={r.id} className="flex items-center gap-3 bg-white rounded-xl border border-slate-200/60 p-3">
-                  <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                    <CheckCircle2 size={14} className="text-emerald-600" />
+                <div key={r.id} className={`flex items-center gap-3 rounded-xl border p-3 ${
+                  theme === 'dark' ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-white border-surface-200/60'
+                }`}>
+                  <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                    <CheckCircle2 size={14} className="text-emerald-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-700 line-through">{info.name}</p>
-                    <p className="text-xs text-slate-400">{r.note || 'Follow up'}</p>
+                    <p className={`text-sm font-medium line-through ${theme === 'dark' ? 'text-surface-400' : 'text-surface-600'}`}>{info.name}</p>
+                    <p className={`text-xs ${theme === 'dark' ? 'text-surface-600' : 'text-surface-400'}`}>{r.note || 'Follow up'}</p>
                   </div>
                 </div>
               );
@@ -931,34 +988,40 @@ function RemindersView({ data, onCompleteReminder, onDeleteReminder }: {
   );
 }
 
-function ReminderCard({ reminder, info, formatDate, isOverdue, onComplete, onDelete }: {
+function ReminderCard({ reminder, info, formatDate, isOverdue, theme, onComplete, onDelete }: {
   reminder: any; info: { name: string; company: string; title: string };
-  formatDate: (d: string) => string; isOverdue: boolean;
+  formatDate: (d: string) => string; isOverdue: boolean; theme: string;
   onComplete: (id: string) => void; onDelete: (id: string) => void;
 }) {
   return (
-    <div className={`flex items-center gap-3 bg-white rounded-xl border p-4 transition-all hover:shadow-md ${
-      isOverdue ? 'border-rose-200 bg-rose-50/50' : 'border-slate-200/60'
+    <div className={`flex items-center gap-3 rounded-xl border p-4 transition-all hover:shadow-lg ${
+      isOverdue
+        ? theme === 'dark'
+          ? 'border-rose-500/30 bg-rose-500/5'
+          : 'border-rose-200 bg-rose-50/50'
+        : theme === 'dark'
+          ? 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'
+          : 'border-surface-200/60 bg-white hover:shadow-elevated'
     }`}>
       <button
         onClick={() => onComplete(reminder.id)}
         className={`w-6 h-6 rounded-full border-2 shrink-0 flex items-center justify-center transition-all hover:bg-emerald-500 hover:border-emerald-500 hover:text-white ${
-          isOverdue ? 'border-rose-300' : 'border-slate-300'
+          isOverdue ? 'border-rose-400/60' : theme === 'dark' ? 'border-surface-600' : 'border-surface-300'
         }`}
       >
         <CheckCircle2 size={12} className="opacity-0 hover:opacity-100" />
       </button>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-800">{info.name}</p>
-        <p className="text-xs text-slate-500">{info.company}{info.title ? ` - ${info.title}` : ''}</p>
-        {reminder.note && <p className="text-xs text-slate-600 mt-0.5">{reminder.note}</p>}
+        <p className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-surface-800'}`}>{info.name}</p>
+        <p className={`text-xs ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>{info.company}{info.title ? ` - ${info.title}` : ''}</p>
+        {reminder.note && <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-surface-500' : 'text-surface-600'}`}>{reminder.note}</p>}
       </div>
       <div className="text-right shrink-0">
-        <p className={`text-xs font-medium ${isOverdue ? 'text-rose-600' : 'text-slate-500'}`}>
+        <p className={`text-xs font-medium ${isOverdue ? 'text-rose-400' : theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>
           {formatDate(reminder.dueDate)}
         </p>
       </div>
-      <button onClick={() => onDelete(reminder.id)} className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-300 hover:text-rose-500 transition-colors shrink-0">
+      <button onClick={() => onDelete(reminder.id)} className="p-1.5 rounded-lg hover:bg-rose-500/10 text-surface-500 hover:text-rose-400 transition-colors shrink-0">
         <Trash2 size={14} />
       </button>
     </div>
@@ -968,10 +1031,11 @@ function ReminderCard({ reminder, info, formatDate, isOverdue, onComplete, onDel
 // --- Dashboard View ---
 
 function DashboardView({
-  data, stats, onSelectCompany, onCopyMessage, onChangeStatus, onCompleteReminder,
+  data, stats, theme, onSelectCompany, onCopyMessage, onChangeStatus, onCompleteReminder,
 }: {
   data: AppData;
   stats: ReturnType<typeof getStats>;
+  theme: string;
   onSelectCompany: (id: string) => void;
   onCopyMessage: (msg: string) => void;
   onChangeStatus: (companyId: string, contactId: string, status: ContactStatus) => void;
@@ -996,16 +1060,20 @@ function DashboardView({
     <div className="space-y-6">
       {/* Search */}
       <div className="relative w-full max-w-xl">
-        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-400" />
         <input
           type="text"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="Search companies, contacts, or job titles..."
-          className="w-full pl-11 pr-10 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-shadow bg-white shadow-sm"
+          className={`w-full pl-11 pr-10 py-3 rounded-xl text-sm transition-all ${
+            theme === 'dark'
+              ? 'bg-white/[0.04] border border-white/[0.08] text-white placeholder-surface-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500/50'
+              : 'bg-white border border-surface-200 text-surface-900 placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-sm'
+          }`}
         />
         {searchQuery && (
-          <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+          <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-white/[0.06] text-surface-400 hover:text-surface-200 transition-colors">
             <X size={14} />
           </button>
         )}
@@ -1016,6 +1084,7 @@ function DashboardView({
           matchedCompanies={matchedCompanies}
           matchedContacts={matchedContacts}
           searchQuery={searchQuery}
+          theme={theme}
           onSelectCompany={onSelectCompany}
           onChangeStatus={onChangeStatus}
           onCopyMessage={onCopyMessage}
@@ -1024,44 +1093,49 @@ function DashboardView({
         <>
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <StatCard icon={<Users size={20} />} label="Total Contacts" value={stats.total} color="emerald" />
-            <StatCard icon={<Clock size={20} />} label="Pending" value={stats.pending} color="amber" />
-            <StatCard icon={<CheckCircle2 size={20} />} label="Accepted" value={stats.accepted} color="emerald" />
-            <StatCard icon={<BarChart3 size={20} />} label="Acceptance Rate" value={`${stats.acceptanceRate}%`} color="blue" />
+            <StatCard icon={<Users size={20} />} label="Total Contacts" value={stats.total} color="brand" theme={theme} />
+            <StatCard icon={<Clock size={20} />} label="Pending" value={stats.pending} color="amber" theme={theme} />
+            <StatCard icon={<CheckCircle2 size={20} />} label="Accepted" value={stats.accepted} color="emerald" theme={theme} />
+            <StatCard icon={<BarChart3 size={20} />} label="Acceptance Rate" value={`${stats.acceptanceRate}%`} color="violet" theme={theme} />
           </div>
 
           {/* Follow Up Today */}
           <FollowUpToday
             reminders={data.reminders || []}
             companies={data.companies}
+            theme={theme}
             onCompleteReminder={onCompleteReminder}
           />
 
           {/* Ready to message */}
           {stats.readyToMessage.length > 0 && (
             <section>
-              <h2 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                <MessageSquare size={15} className="text-emerald-600" />
+              <h2 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>
+                <MessageSquare size={15} className="text-brand-400" />
                 Ready to Message ({stats.readyToMessage.length})
               </h2>
               <div className="grid gap-3 sm:grid-cols-2">
                 {stats.readyToMessage.slice(0, 6).map(c => {
                   const parent = data.companies.find(co => co.contacts.some(ct => ct.id === c.id));
                   return (
-                    <div key={c.id} className="bg-white rounded-xl border border-slate-200/60 p-4 hover:shadow-md transition-shadow">
+                    <div key={c.id} className={`rounded-xl border p-4 transition-all hover:shadow-lg ${
+                      theme === 'dark'
+                        ? 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-brand-500/20'
+                        : 'bg-white border-surface-200/60 hover:shadow-elevated hover:border-brand-200'
+                    }`}>
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <div>
-                          <p className="font-semibold text-sm text-slate-900">{c.name}</p>
-                          <p className="text-xs text-slate-500">{c.title} at {parent?.name}</p>
+                          <p className={`font-semibold text-sm ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>{c.name}</p>
+                          <p className={`text-xs ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>{c.title} at {parent?.name}</p>
                         </div>
                         <button
                           onClick={() => onCopyMessage(c.draftMessage)}
-                          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition-colors"
+                          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500/10 text-brand-400 text-xs font-semibold hover:bg-brand-500/20 transition-colors"
                         >
                           <Copy size={12} /> Copy
                         </button>
                       </div>
-                      <p className="text-xs text-slate-600 line-clamp-2 mt-2 whitespace-pre-wrap">{c.draftMessage}</p>
+                      <p className={`text-xs line-clamp-2 mt-2 whitespace-pre-wrap ${theme === 'dark' ? 'text-surface-400' : 'text-surface-600'}`}>{c.draftMessage}</p>
                     </div>
                   );
                 })}
@@ -1071,12 +1145,12 @@ function DashboardView({
 
           {/* Companies */}
           <section>
-            <h2 className="text-sm font-semibold text-slate-900 mb-3">Companies</h2>
+            <h2 className={`text-sm font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>Companies</h2>
             {data.companies.length === 0 ? (
               <div className="text-center py-16">
-                <Building2 size={40} className="mx-auto text-slate-300 mb-3" />
-                <p className="text-sm text-slate-500 mb-1">No companies yet</p>
-                <p className="text-xs text-slate-400">Add a company from the sidebar to start tracking</p>
+                <Building2 size={40} className={`mx-auto mb-3 ${theme === 'dark' ? 'text-surface-700' : 'text-surface-300'}`} />
+                <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>No companies yet</p>
+                <p className={`text-xs ${theme === 'dark' ? 'text-surface-600' : 'text-surface-400'}`}>Add a company from the sidebar to start tracking</p>
               </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -1086,24 +1160,28 @@ function DashboardView({
                     <button
                       key={c.id}
                       onClick={() => onSelectCompany(c.id)}
-                      className="bg-white rounded-xl border border-slate-200/60 p-4 text-left hover:shadow-md hover:border-slate-300 transition-all group"
+                      className={`rounded-xl border p-4 text-left transition-all group ${
+                        theme === 'dark'
+                          ? 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-brand-500/20 hover:shadow-glow-brand'
+                          : 'bg-white border-surface-200/60 hover:shadow-elevated hover:border-brand-200'
+                      }`}
                     >
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
-                            <Building2 size={16} className="text-slate-500" />
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${theme === 'dark' ? 'bg-brand-500/10' : 'bg-brand-50'}`}>
+                            <Building2 size={16} className="text-brand-400" />
                           </div>
-                          <span className="font-semibold text-sm text-slate-900 group-hover:text-emerald-700 transition-colors">{c.name}</span>
+                          <span className={`font-semibold text-sm group-hover:text-brand-400 transition-colors ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>{c.name}</span>
                         </div>
-                        <ChevronRight size={16} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
+                        <ChevronRight size={16} className={`group-hover:text-brand-400 transition-colors ${theme === 'dark' ? 'text-surface-600' : 'text-surface-300'}`} />
                       </div>
                       <div className="flex gap-3 text-xs">
-                        <span className="text-amber-600 font-medium">{cs.pending} pending</span>
-                        <span className="text-emerald-600 font-medium">{cs.accepted} accepted</span>
-                        {cs.declined > 0 && <span className="text-rose-500 font-medium">{cs.declined} declined</span>}
+                        <span className="text-amber-400 font-medium">{cs.pending} pending</span>
+                        <span className="text-emerald-400 font-medium">{cs.accepted} accepted</span>
+                        {cs.declined > 0 && <span className="text-rose-400 font-medium">{cs.declined} declined</span>}
                       </div>
                       {cs.total > 0 && (
-                        <div className="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden flex">
+                        <div className={`mt-3 h-1.5 rounded-full overflow-hidden flex ${theme === 'dark' ? 'bg-white/[0.06]' : 'bg-surface-100'}`}>
                           <div className="bg-emerald-500 rounded-full" style={{ width: `${(cs.accepted / cs.total) * 100}%` }} />
                           <div className="bg-amber-400" style={{ width: `${(cs.pending / cs.total) * 100}%` }} />
                           <div className="bg-rose-400 rounded-full" style={{ width: `${(cs.declined / cs.total) * 100}%` }} />
@@ -1121,42 +1199,47 @@ function DashboardView({
   );
 }
 
-function SearchResults({ matchedCompanies, matchedContacts, searchQuery, onSelectCompany, onChangeStatus, onCopyMessage }: {
+function SearchResults({ matchedCompanies, matchedContacts, searchQuery, theme, onSelectCompany, onChangeStatus, onCopyMessage }: {
   matchedCompanies: Company[];
   matchedContacts: (Contact & { companyId: string; companyName: string })[];
   searchQuery: string;
+  theme: string;
   onSelectCompany: (id: string) => void;
   onChangeStatus: (companyId: string, contactId: string, status: ContactStatus) => void;
   onCopyMessage: (msg: string) => void;
 }) {
   if (matchedCompanies.length === 0 && matchedContacts.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200/60 p-8 text-center">
-        <Search size={32} className="mx-auto text-slate-300 mb-2" />
-        <p className="text-sm font-medium text-slate-600">No matches found</p>
-        <p className="text-xs text-slate-400 mt-1">Try a different search term</p>
+      <div className={`rounded-xl border p-8 text-center ${theme === 'dark' ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-white border-surface-200/60'}`}>
+        <Search size={32} className={`mx-auto mb-2 ${theme === 'dark' ? 'text-surface-600' : 'text-surface-300'}`} />
+        <p className={`text-sm font-medium ${theme === 'dark' ? 'text-surface-400' : 'text-surface-600'}`}>No matches found</p>
+        <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-surface-600' : 'text-surface-400'}`}>Try a different search term</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-sm font-semibold text-slate-900">Results for "{searchQuery}"</h2>
+      <h2 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>Results for "{searchQuery}"</h2>
 
       {matchedCompanies.length > 0 && (
         <div>
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Companies ({matchedCompanies.length})</h3>
+          <h3 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-surface-500' : 'text-surface-500'}`}>Companies ({matchedCompanies.length})</h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {matchedCompanies.map(c => (
-              <button key={c.id} onClick={() => onSelectCompany(c.id)} className="bg-white rounded-xl border border-slate-200/60 p-4 text-left hover:shadow-md hover:border-slate-300 transition-all group w-full">
+              <button key={c.id} onClick={() => onSelectCompany(c.id)} className={`rounded-xl border p-4 text-left transition-all group w-full ${
+                theme === 'dark'
+                  ? 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-brand-500/20'
+                  : 'bg-white border-surface-200/60 hover:shadow-elevated hover:border-brand-200'
+              }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                      <Building2 size={16} className="text-slate-500" />
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${theme === 'dark' ? 'bg-brand-500/10' : 'bg-brand-50'}`}>
+                      <Building2 size={16} className="text-brand-400" />
                     </div>
-                    <span className="font-semibold text-sm text-slate-900 group-hover:text-emerald-700 transition-colors truncate">{c.name}</span>
+                    <span className={`font-semibold text-sm group-hover:text-brand-400 transition-colors truncate ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>{c.name}</span>
                   </div>
-                  <ChevronRight size={16} className="text-slate-300 group-hover:text-emerald-500 transition-colors shrink-0" />
+                  <ChevronRight size={16} className={`group-hover:text-brand-400 transition-colors shrink-0 ${theme === 'dark' ? 'text-surface-600' : 'text-surface-300'}`} />
                 </div>
               </button>
             ))}
@@ -1166,22 +1249,26 @@ function SearchResults({ matchedCompanies, matchedContacts, searchQuery, onSelec
 
       {matchedContacts.length > 0 && (
         <div>
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Contacts ({matchedContacts.length})</h3>
+          <h3 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-surface-500' : 'text-surface-500'}`}>Contacts ({matchedContacts.length})</h3>
           <div className="space-y-2">
             {matchedContacts.slice(0, 20).map(contact => (
-              <div key={contact.id} className="bg-white rounded-xl border border-slate-200/60 p-4 hover:shadow-md transition-all">
+              <div key={contact.id} className={`rounded-xl border p-4 transition-all ${
+                theme === 'dark'
+                  ? 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]'
+                  : 'bg-white border-surface-200/60 hover:shadow-elevated'
+              }`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-semibold text-sm text-slate-900">{contact.name}</h4>
-                      <StatusBadge status={contact.status} />
+                      <h4 className={`font-semibold text-sm ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>{contact.name}</h4>
+                      <StatusBadge status={contact.status} theme={theme} />
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">{contact.title} at {contact.companyName}</p>
+                    <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>{contact.title} at {contact.companyName}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <StatusDropdown status={contact.status} onChange={s => onChangeStatus(contact.companyId, contact.id, s)} />
+                    <StatusDropdown status={contact.status} theme={theme} onChange={s => onChangeStatus(contact.companyId, contact.id, s)} />
                     {contact.status === 'accepted' && contact.draftMessage && (
-                      <button onClick={() => onCopyMessage(contact.draftMessage)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors">
+                      <button onClick={() => onCopyMessage(contact.draftMessage)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-500/10 text-brand-400 text-xs font-semibold hover:bg-brand-500/20 transition-colors">
                         <Copy size={12} /> Copy
                       </button>
                     )}
@@ -1196,19 +1283,31 @@ function SearchResults({ matchedCompanies, matchedContacts, searchQuery, onSelec
   );
 }
 
-function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string | number; color: string }) {
-  const colors: Record<string, string> = {
-    emerald: 'bg-emerald-50 text-emerald-600',
-    amber: 'bg-amber-50 text-amber-600',
-    blue: 'bg-blue-50 text-blue-600',
+function StatCard({ icon, label, value, color, theme }: { icon: React.ReactNode; label: string; value: string | number; color: string; theme: string }) {
+  const darkColors: Record<string, string> = {
+    brand: 'bg-brand-500/10 text-brand-400',
+    amber: 'bg-amber-500/10 text-amber-400',
+    emerald: 'bg-emerald-500/10 text-emerald-400',
+    violet: 'bg-violet-500/10 text-violet-400',
   };
+  const lightColors: Record<string, string> = {
+    brand: 'bg-brand-50 text-brand-600',
+    amber: 'bg-amber-50 text-amber-600',
+    emerald: 'bg-emerald-50 text-emerald-600',
+    violet: 'bg-violet-50 text-violet-600',
+  };
+  const colors = theme === 'dark' ? darkColors : lightColors;
   return (
-    <div className="bg-white rounded-xl border border-slate-200/60 p-4">
+    <div className={`rounded-xl border p-4 transition-all hover:shadow-lg ${
+      theme === 'dark'
+        ? 'bg-white/[0.02] border-white/[0.06] hover:border-brand-500/20'
+        : 'bg-white border-surface-200/60 hover:shadow-elevated'
+    }`}>
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${colors[color]}`}>
         {icon}
       </div>
-      <p className="text-2xl font-bold text-slate-900 tabular-nums">{value}</p>
-      <p className="text-xs text-slate-500 mt-0.5">{label}</p>
+      <p className={`text-2xl font-bold tabular-nums ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>{value}</p>
+      <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>{label}</p>
     </div>
   );
 }
@@ -1216,10 +1315,10 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
 // --- Company View ---
 
 function CompanyView({
-  company, data, searchQuery, onSearchChange, filteredContacts,
+  company, data, theme, searchQuery, onSearchChange, filteredContacts,
   onAddContact, onEditContact, onDeleteContact, onChangeStatus, onCopyMessage, onSelectContact,
 }: {
-  company: Company; data: AppData; searchQuery: string; onSearchChange: (q: string) => void; filteredContacts: Contact[];
+  company: Company; data: AppData; theme: string; searchQuery: string; onSearchChange: (q: string) => void; filteredContacts: Contact[];
   onAddContact: () => void; onEditContact: (c: Contact) => void; onDeleteContact: (id: string) => void;
   onChangeStatus: (contactId: string, status: ContactStatus) => void; onCopyMessage: (msg: string) => void;
   onSelectContact: (contactId: string) => void;
@@ -1231,16 +1330,18 @@ function CompanyView({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-4 bg-white rounded-xl border border-slate-200/60 px-4 py-2.5 text-xs flex-wrap">
-          <span className="text-slate-500">{cs.total} total</span>
-          <span className="text-amber-600 font-semibold">{cs.pending} pending</span>
-          <span className="text-emerald-600 font-semibold">{cs.accepted} accepted</span>
-          {cs.declined > 0 && <span className="text-rose-500 font-semibold">{cs.declined} declined</span>}
-          {cs.noResponse > 0 && <span className="text-slate-400 font-semibold">{cs.noResponse} no response</span>}
+        <div className={`flex items-center gap-4 rounded-xl border px-4 py-2.5 text-xs flex-wrap ${
+          theme === 'dark' ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-white border-surface-200/60'
+        }`}>
+          <span className={theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}>{cs.total} total</span>
+          <span className="text-amber-400 font-semibold">{cs.pending} pending</span>
+          <span className="text-emerald-400 font-semibold">{cs.accepted} accepted</span>
+          {cs.declined > 0 && <span className="text-rose-400 font-semibold">{cs.declined} declined</span>}
+          {cs.noResponse > 0 && <span className="text-surface-400 font-semibold">{cs.noResponse} no response</span>}
         </div>
         <button
           onClick={onAddContact}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm"
+          className="btn-primary flex items-center gap-2"
         >
           <Plus size={16} /> Add Contact
         </button>
@@ -1248,25 +1349,29 @@ function CompanyView({
 
       {company.contacts.length > 0 && (
         <div className="relative max-w-sm">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-surface-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={e => onSearchChange(e.target.value)}
             placeholder="Search contacts..."
-            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-shadow bg-white"
+            className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-sm transition-all ${
+              theme === 'dark'
+                ? 'bg-white/[0.04] border border-white/[0.08] text-white placeholder-surface-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500/50'
+                : 'bg-white border border-surface-200 text-surface-900 placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500'
+            }`}
           />
         </div>
       )}
 
       {company.contacts.length === 0 ? (
         <div className="text-center py-16">
-          <Users size={40} className="mx-auto text-slate-300 mb-3" />
-          <p className="text-sm text-slate-500 mb-1">No contacts yet</p>
-          <p className="text-xs text-slate-400">Add people you want to connect with at {company.name}</p>
+          <Users size={40} className={`mx-auto mb-3 ${theme === 'dark' ? 'text-surface-700' : 'text-surface-300'}`} />
+          <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>No contacts yet</p>
+          <p className={`text-xs ${theme === 'dark' ? 'text-surface-600' : 'text-surface-400'}`}>Add people you want to connect with at {company.name}</p>
         </div>
       ) : filteredContacts.length === 0 ? (
-        <p className="text-sm text-slate-500 py-8 text-center">No contacts match your search</p>
+        <p className={`text-sm py-8 text-center ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>No contacts match your search</p>
       ) : (
         <div className="space-y-3">
           {filteredContacts.map(contact => {
@@ -1274,22 +1379,26 @@ function CompanyView({
             const isAccepted = contact.status === 'accepted';
             const hasDraft = contact.draftMessage.trim().length > 0;
             return (
-              <div key={contact.id} className="bg-white rounded-xl border border-slate-200/60 hover:shadow-md transition-all group">
+              <div key={contact.id} className={`rounded-xl border transition-all group ${
+                theme === 'dark'
+                  ? 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-brand-500/20'
+                  : 'bg-white border-surface-200/60 hover:shadow-elevated hover:border-brand-200'
+              }`}>
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1 cursor-pointer" onClick={() => onSelectContact(contact.id)}>
                       <div className="flex items-center gap-2.5 flex-wrap">
-                        <h3 className="font-semibold text-sm text-slate-900">{contact.name}</h3>
-                        <StatusBadge status={contact.status} />
+                        <h3 className={`font-semibold text-sm ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>{contact.name}</h3>
+                        <StatusBadge status={contact.status} theme={theme} />
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">{contact.title}</p>
+                      <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>{contact.title}</p>
                       {contact.linkedinUrl && (
                         <a
                           href={contact.linkedinUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={e => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 mt-1.5 transition-colors"
+                          className="inline-flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 mt-1.5 transition-colors"
                         >
                           LinkedIn <ExternalLink size={10} />
                         </a>
@@ -1301,11 +1410,13 @@ function CompanyView({
                       )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <StatusDropdown status={contact.status} onChange={s => onChangeStatus(contact.id, s)} />
-                      <button onClick={() => onEditContact(contact)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                      <StatusDropdown status={contact.status} theme={theme} onChange={s => onChangeStatus(contact.id, s)} />
+                      <button onClick={() => onEditContact(contact)} className={`p-1.5 rounded-lg transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
+                        theme === 'dark' ? 'hover:bg-white/[0.06] text-surface-500 hover:text-surface-200' : 'hover:bg-surface-100 text-surface-400 hover:text-surface-600'
+                      }`}>
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => onDeleteContact(contact.id)} className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-500 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                      <button onClick={() => onDeleteContact(contact.id)} className="p-1.5 rounded-lg hover:bg-rose-500/10 text-surface-500 hover:text-rose-400 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -1315,26 +1426,21 @@ function CompanyView({
                     <div className="mt-3">
                       <button
                         onClick={() => setExpandedDraft(isDraftExpanded ? null : contact.id)}
-                        className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
+                        className={`text-xs font-medium transition-colors ${theme === 'dark' ? 'text-brand-400 hover:text-brand-300' : 'text-brand-600 hover:text-brand-500'}`}
                       >
-                        <MessageSquare size={12} />
-                        {isDraftExpanded ? 'Hide' : 'Show'} draft message
+                        {isDraftExpanded ? 'Hide message' : 'Show message'}
                       </button>
-                      {(isDraftExpanded || isAccepted) && (
-                        <div className={`mt-2 p-3 rounded-lg text-xs whitespace-pre-wrap transition-colors ${
-                          isAccepted ? 'bg-emerald-50 border border-emerald-200' : 'bg-slate-50 border border-slate-200'
+                      {isDraftExpanded && (
+                        <div className={`mt-2 rounded-lg p-3 text-xs whitespace-pre-wrap ${
+                          theme === 'dark' ? 'bg-white/[0.03] text-surface-300 border border-white/[0.06]' : 'bg-surface-50 text-surface-700 border border-surface-200/60'
                         }`}>
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-slate-700 flex-1">{contact.draftMessage}</p>
-                            {isAccepted && (
-                              <button
-                                onClick={() => onCopyMessage(contact.draftMessage)}
-                                className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm"
-                              >
-                                <Copy size={12} /> Copy
-                              </button>
-                            )}
-                          </div>
+                          {contact.draftMessage}
+                          <button
+                            onClick={() => onCopyMessage(contact.draftMessage)}
+                            className="flex items-center gap-1 mt-2 text-brand-400 hover:text-brand-300 font-semibold transition-colors"
+                          >
+                            <Copy size={11} /> Copy message
+                          </button>
                         </div>
                       )}
                     </div>

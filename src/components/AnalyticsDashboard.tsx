@@ -4,9 +4,10 @@ import { TrendingUp, BarChart3, Clock, Target } from 'lucide-react';
 
 interface AnalyticsDashboardProps {
   data: AppData;
+  theme?: string;
 }
 
-export function AnalyticsDashboard({ data }: AnalyticsDashboardProps) {
+export function AnalyticsDashboard({ data, theme = 'dark' }: AnalyticsDashboardProps) {
   const allContacts = useMemo(() => data.companies.flatMap(c => c.contacts), [data]);
 
   const pipelineData = useMemo(() => {
@@ -80,7 +81,8 @@ export function AnalyticsDashboard({ data }: AnalyticsDashboardProps) {
           label="Response Rate"
           value={`${responseRate}%`}
           sublabel="replied / total outreach"
-          color="emerald"
+          color="brand"
+          theme={theme}
         />
         <MetricCard
           icon={<Clock size={20} />}
@@ -88,13 +90,15 @@ export function AnalyticsDashboard({ data }: AnalyticsDashboardProps) {
           value={avgTimeToResponse}
           sublabel="from outreach to reply"
           color="blue"
+          theme={theme}
         />
         <MetricCard
           icon={<TrendingUp size={20} />}
           label="Active Pipeline"
           value={allContacts.filter(c => !['offer', 'rejected'].includes(c.pipelineStage)).length.toString()}
           sublabel="contacts in progress"
-          color="purple"
+          color="violet"
+          theme={theme}
         />
         <MetricCard
           icon={<BarChart3 size={20} />}
@@ -102,22 +106,26 @@ export function AnalyticsDashboard({ data }: AnalyticsDashboardProps) {
           value={allContacts.length.toString()}
           sublabel={`across ${data.companies.length} companies`}
           color="amber"
+          theme={theme}
         />
       </div>
 
       {/* Pipeline chart */}
-      <div className="bg-white rounded-xl border border-slate-200/60 p-6">
-        <h3 className="text-sm font-semibold text-slate-900 mb-4">Pipeline Distribution</h3>
+      <div className={`rounded-xl border p-6 ${
+        theme === 'dark' ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-white border-surface-200/60'
+      }`}>
+        <h3 className={`text-sm font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>Pipeline Distribution</h3>
         <div className="space-y-3">
           {pipelineData.map(stage => (
             <div key={stage.value} className="flex items-center gap-3">
-              <div className="w-28 text-xs font-medium text-slate-600 shrink-0">{stage.label}</div>
-              <div className="flex-1 h-8 bg-slate-100 rounded-lg overflow-hidden relative">
+              <div className={`w-28 text-xs font-medium shrink-0 ${theme === 'dark' ? 'text-surface-400' : 'text-surface-600'}`}>{stage.label}</div>
+              <div className={`flex-1 h-8 rounded-lg overflow-hidden relative ${theme === 'dark' ? 'bg-white/[0.04]' : 'bg-surface-100'}`}>
                 <div
                   className="h-full rounded-lg transition-all duration-500 flex items-center px-2"
                   style={{
                     width: `${Math.max((stage.count / maxPipeline) * 100, stage.count > 0 ? 8 : 0)}%`,
                     backgroundColor: stage.color,
+                    boxShadow: stage.count > 0 ? `0 0 12px ${stage.color}40` : 'none',
                   }}
                 >
                   {stage.count > 0 && (
@@ -125,7 +133,7 @@ export function AnalyticsDashboard({ data }: AnalyticsDashboardProps) {
                   )}
                 </div>
                 {stage.count === 0 && (
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">0</span>
+                  <span className={`absolute left-2 top-1/2 -translate-y-1/2 text-xs ${theme === 'dark' ? 'text-surface-600' : 'text-surface-400'}`}>0</span>
                 )}
               </div>
             </div>
@@ -134,16 +142,18 @@ export function AnalyticsDashboard({ data }: AnalyticsDashboardProps) {
       </div>
 
       {/* Weekly activity chart */}
-      <div className="bg-white rounded-xl border border-slate-200/60 p-6">
-        <h3 className="text-sm font-semibold text-slate-900 mb-1">Weekly Activity</h3>
-        <p className="text-xs text-slate-500 mb-4">Contacts added, accepted, and declined over the last 8 weeks</p>
+      <div className={`rounded-xl border p-6 ${
+        theme === 'dark' ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-white border-surface-200/60'
+      }`}>
+        <h3 className={`text-sm font-semibold mb-1 ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>Weekly Activity</h3>
+        <p className={`text-xs mb-4 ${theme === 'dark' ? 'text-surface-500' : 'text-surface-500'}`}>Contacts added, accepted, and declined over the last 8 weeks</p>
         <div className="flex items-end gap-2 h-40">
           {weeklyData.map((week, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
               <div className="flex flex-col items-center gap-0.5 flex-1 justify-end w-full">
                 {week.added > 0 && (
                   <div
-                    className="w-full max-w-[24px] bg-blue-400 rounded-t transition-all duration-500"
+                    className="w-full max-w-[24px] bg-brand-400 rounded-t transition-all duration-500"
                     style={{ height: `${(week.added / maxWeekly) * 100}%`, minHeight: '4px' }}
                     title={`${week.added} added`}
                   />
@@ -163,34 +173,36 @@ export function AnalyticsDashboard({ data }: AnalyticsDashboardProps) {
                   />
                 )}
                 {week.added === 0 && week.accepted === 0 && week.declined === 0 && (
-                  <div className="w-full max-w-[24px] bg-slate-200 rounded" style={{ height: '4px' }} />
+                  <div className={`w-full max-w-[24px] rounded ${theme === 'dark' ? 'bg-white/[0.06]' : 'bg-surface-200'}`} style={{ height: '4px' }} />
                 )}
               </div>
-              <span className="text-[10px] text-slate-400 mt-1">{week.week}</span>
+              <span className={`text-[10px] mt-1 ${theme === 'dark' ? 'text-surface-500' : 'text-surface-400'}`}>{week.week}</span>
             </div>
           ))}
         </div>
-        <div className="flex items-center gap-4 mt-4 pt-3 border-t border-slate-100">
+        <div className={`flex items-center gap-4 mt-4 pt-3 border-t ${theme === 'dark' ? 'border-white/[0.06]' : 'border-surface-100'}`}>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-blue-400" />
-            <span className="text-xs text-slate-500">Added</span>
+            <div className="w-3 h-3 rounded bg-brand-400" />
+            <span className={`text-xs ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>Added</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-emerald-500" />
-            <span className="text-xs text-slate-500">Accepted</span>
+            <span className={`text-xs ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>Accepted</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-rose-400" />
-            <span className="text-xs text-slate-500">Declined</span>
+            <span className={`text-xs ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>Declined</span>
           </div>
         </div>
       </div>
 
       {/* Company breakdown */}
-      <div className="bg-white rounded-xl border border-slate-200/60 p-6">
-        <h3 className="text-sm font-semibold text-slate-900 mb-4">Company Breakdown</h3>
+      <div className={`rounded-xl border p-6 ${
+        theme === 'dark' ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-white border-surface-200/60'
+      }`}>
+        <h3 className={`text-sm font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>Company Breakdown</h3>
         {data.companies.length === 0 ? (
-          <p className="text-sm text-slate-400">No companies added yet</p>
+          <p className={`text-sm ${theme === 'dark' ? 'text-surface-500' : 'text-surface-400'}`}>No companies added yet</p>
         ) : (
           <div className="space-y-2">
             {data.companies
@@ -201,18 +213,18 @@ export function AnalyticsDashboard({ data }: AnalyticsDashboardProps) {
                 const total = company.contacts.length;
                 return (
                   <div key={company.id} className="flex items-center gap-3">
-                    <span className="w-32 text-xs font-medium text-slate-700 truncate shrink-0">{company.name}</span>
-                    <div className="flex-1 h-6 bg-slate-100 rounded-md overflow-hidden flex">
+                    <span className={`w-32 text-xs font-medium truncate shrink-0 ${theme === 'dark' ? 'text-surface-300' : 'text-surface-700'}`}>{company.name}</span>
+                    <div className={`flex-1 h-6 rounded-md overflow-hidden flex ${theme === 'dark' ? 'bg-white/[0.04]' : 'bg-surface-100'}`}>
                       <div
-                        className="h-full bg-emerald-500 transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-brand-500 to-emerald-500 transition-all duration-500"
                         style={{ width: total > 0 ? `${(accepted / total) * 100}%` : '0%' }}
                       />
                       <div
-                        className="h-full bg-slate-300 transition-all duration-500"
+                        className={`h-full transition-all duration-500 ${theme === 'dark' ? 'bg-surface-700' : 'bg-surface-300'}`}
                         style={{ width: total > 0 ? `${((total - accepted) / total) * 100}%` : '0%' }}
                       />
                     </div>
-                    <span className="text-xs text-slate-500 shrink-0 w-16 text-right">{accepted}/{total}</span>
+                    <span className={`text-xs shrink-0 w-16 text-right ${theme === 'dark' ? 'text-surface-400' : 'text-surface-500'}`}>{accepted}/{total}</span>
                   </div>
                 );
               })}
@@ -223,23 +235,34 @@ export function AnalyticsDashboard({ data }: AnalyticsDashboardProps) {
   );
 }
 
-function MetricCard({ icon, label, value, sublabel, color }: {
-  icon: React.ReactNode; label: string; value: string; sublabel: string; color: string;
+function MetricCard({ icon, label, value, sublabel, color, theme = 'dark' }: {
+  icon: React.ReactNode; label: string; value: string; sublabel: string; color: string; theme?: string;
 }) {
-  const colors: Record<string, string> = {
-    emerald: 'bg-emerald-50 text-emerald-600',
+  const darkColors: Record<string, string> = {
+    brand: 'bg-brand-500/10 text-brand-400',
+    blue: 'bg-blue-500/10 text-blue-400',
+    violet: 'bg-violet-500/10 text-violet-400',
+    amber: 'bg-amber-500/10 text-amber-400',
+  };
+  const lightColors: Record<string, string> = {
+    brand: 'bg-brand-50 text-brand-600',
     blue: 'bg-blue-50 text-blue-600',
-    purple: 'bg-purple-50 text-purple-600',
+    violet: 'bg-violet-50 text-violet-600',
     amber: 'bg-amber-50 text-amber-600',
   };
+  const colors = theme === 'dark' ? darkColors : lightColors;
   return (
-    <div className="bg-white rounded-xl border border-slate-200/60 p-4">
+    <div className={`rounded-xl border p-4 transition-all hover:shadow-lg ${
+      theme === 'dark'
+        ? 'bg-white/[0.02] border-white/[0.06] hover:border-brand-500/20'
+        : 'bg-white border-surface-200/60 hover:shadow-elevated'
+    }`}>
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${colors[color]}`}>
         {icon}
       </div>
-      <p className="text-2xl font-bold text-slate-900 tabular-nums">{value}</p>
-      <p className="text-xs font-medium text-slate-700 mt-0.5">{label}</p>
-      <p className="text-[11px] text-slate-400 mt-0.5">{sublabel}</p>
+      <p className={`text-2xl font-bold tabular-nums ${theme === 'dark' ? 'text-white' : 'text-surface-900'}`}>{value}</p>
+      <p className={`text-xs font-medium mt-0.5 ${theme === 'dark' ? 'text-surface-300' : 'text-surface-700'}`}>{label}</p>
+      <p className={`text-[11px] mt-0.5 ${theme === 'dark' ? 'text-surface-500' : 'text-surface-400'}`}>{sublabel}</p>
     </div>
   );
 }

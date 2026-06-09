@@ -9,6 +9,7 @@ interface TagManagerProps {
   onAddTag: (name: string, color: string) => void;
   onDeleteTag: (tagId: string) => void;
   compact?: boolean;
+  theme?: string;
 }
 
 const TAG_COLORS = [
@@ -16,7 +17,7 @@ const TAG_COLORS = [
   '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
 ];
 
-export function TagManager({ tags, selectedTags, onToggleTag, onAddTag, onDeleteTag, compact = false }: TagManagerProps) {
+export function TagManager({ tags, selectedTags, onToggleTag, onAddTag, onDeleteTag, compact = false, theme = 'dark' }: TagManagerProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState(TAG_COLORS[0]);
@@ -41,7 +42,9 @@ export function TagManager({ tags, selectedTags, onToggleTag, onAddTag, onDelete
               className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all ${
                 isSelected
                   ? 'text-white shadow-sm scale-105'
-                  : 'text-slate-600 bg-slate-100 hover:bg-slate-200'
+                  : theme === 'dark'
+                    ? 'text-surface-400 bg-white/[0.06] hover:bg-white/[0.1]'
+                    : 'text-surface-600 bg-surface-100 hover:bg-surface-200'
               }`}
               style={isSelected ? { backgroundColor: tag.color } : undefined}
             >
@@ -60,13 +63,13 @@ export function TagManager({ tags, selectedTags, onToggleTag, onAddTag, onDelete
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+        <h4 className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 ${theme === 'dark' ? 'text-surface-500' : 'text-surface-600'}`}>
           <Palette size={12} />
           Tags
         </h4>
         <button
           onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+          className="flex items-center gap-1 text-xs font-medium text-brand-400 hover:text-brand-300 transition-colors"
         >
           <Plus size={12} />
           New Tag
@@ -74,14 +77,16 @@ export function TagManager({ tags, selectedTags, onToggleTag, onAddTag, onDelete
       </div>
 
       {isAdding && (
-        <div className="bg-slate-50 rounded-lg border border-slate-200 p-3 space-y-2 animate-in">
+        <div className={`rounded-lg border p-3 space-y-2 animate-in ${
+          theme === 'dark' ? 'bg-white/[0.03] border-white/[0.06]' : 'bg-surface-50 border-surface-200'
+        }`}>
           <input
             type="text"
             value={newName}
             onChange={e => setNewName(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleAdd()}
             placeholder="Tag name"
-            className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            className={theme === 'dark' ? 'input-premium' : 'input-premium-light'}
             autoFocus
           />
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -90,17 +95,17 @@ export function TagManager({ tags, selectedTags, onToggleTag, onAddTag, onDelete
                 key={color}
                 onClick={() => setNewColor(color)}
                 className={`w-6 h-6 rounded-full transition-transform ${
-                  newColor === color ? 'ring-2 ring-offset-1 ring-slate-400 scale-110' : 'hover:scale-110'
-                }`}
+                  newColor === color ? 'ring-2 ring-offset-1 ring-brand-400 scale-110' : 'hover:scale-110'
+                } ${theme === 'dark' ? 'ring-offset-surface-900' : 'ring-offset-white'}`}
                 style={{ backgroundColor: color }}
               />
             ))}
           </div>
           <div className="flex justify-end gap-2">
-            <button onClick={() => setIsAdding(false)} className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg">
+            <button onClick={() => setIsAdding(false)} className={theme === 'dark' ? 'btn-secondary text-xs' : 'btn-secondary-light text-xs'}>
               Cancel
             </button>
-            <button onClick={handleAdd} disabled={!newName.trim()} className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-40">
+            <button onClick={handleAdd} disabled={!newName.trim()} className="btn-primary text-xs !px-3 !py-1.5">
               Create
             </button>
           </div>
@@ -117,7 +122,9 @@ export function TagManager({ tags, selectedTags, onToggleTag, onAddTag, onDelete
                 className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
                   isSelected
                     ? 'text-white shadow-sm'
-                    : 'text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200'
+                    : theme === 'dark'
+                      ? 'text-surface-400 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.06]'
+                      : 'text-surface-600 bg-surface-100 hover:bg-surface-200 border border-surface-200'
                 }`}
                 style={isSelected ? { backgroundColor: tag.color } : undefined}
               >
