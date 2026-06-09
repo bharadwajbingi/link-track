@@ -16,7 +16,7 @@ export function Toast({ message, visible, onClose }: ToastProps) {
       const timer = setTimeout(() => {
         setShow(false);
         setTimeout(onClose, 300);
-      }, 2000);
+      }, 2500);
       return () => clearTimeout(timer);
     }
   }, [visible, onClose]);
@@ -25,11 +25,13 @@ export function Toast({ message, visible, onClose }: ToastProps) {
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-lg transition-all duration-300 ${
+      className={`fixed bottom-6 left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-6 z-[60] flex items-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl transition-all duration-300 ${
         show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
     >
-      <Check size={18} strokeWidth={2.5} />
+      <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+        <Check size={12} strokeWidth={3} />
+      </div>
       <span className="text-sm font-medium">{message}</span>
     </div>
   );
